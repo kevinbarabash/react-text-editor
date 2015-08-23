@@ -70,6 +70,7 @@ function _findNode(node, parent, line, column) {
     }
 }
 
+// TODO return nulls if the line/column doesn't exist inside any AST nodes
 function findNode(root, line, column) {
     cursorNode = null;
     cursorParentNode = null;

@@ -5,6 +5,44 @@ import { findNode } from './node_utils';
 
 let maybeRender;
 
+class LineNumber extends Component {
+    render() {
+        let { node } = this.props;
+        let line = this.props.start ? node.loc.start.line : node.loc.end.line;
+        let style = {
+            width: 40,
+            textAlign: 'right',
+            backgroundColor: '#CCC',
+            display: 'inline-block'
+        };
+        return <span style={style}>{line}</span>;
+    }
+}
+
+LineNumber.defaultProps = {
+    start: true
+};
+
+class Gutter extends Component {
+    render() {
+        let count = this.props.count;
+        let style = {
+            width: 40,
+            textAlign: 'right',
+            backgroundColor: '#CCC',
+            paddingRight: 3
+        };
+        let lines = [];
+        for (let i = 0; i < count; i++) {
+            lines.push(<div>{i+1}</div>);
+        }
+        
+        return <div style={style}>
+            {lines}
+        </div>;
+    }
+}
+
 class Identifier extends Component {
     render() {
         return <span>{this.props.node.name}</span>;
@@ -50,11 +88,13 @@ class BlockComment extends Component {
 
 class ClassDeclaration extends Component {
     render() {
-        let id = maybeRender(this.props.node.id);
-        let body = maybeRender(this.props.node.body);
+        let { node } = this.props;
+        let id = maybeRender(node.id);
+        let body = maybeRender(node.body);
         let open = " {";
         let close = "}";
         
+        // TODO handle indentation of nested classes
         return <div>
             <div>
                 <span style={{ color: "#00F" }}>class</span>
@@ -80,8 +120,9 @@ class ClassBody extends Component {
 
 class MethodDefinition extends Component {
     render() {
-        let key = maybeRender(this.props.node.key);
-        let value = maybeRender(this.props.node.value);
+        let { node } = this.props;
+        let key = maybeRender(node.key);
+        let value = maybeRender(node.value);
         value.props.method = true;
         value.props.indent = this.props.indent;
         return <div>{this.props.indent}{key}{value}</div>;
@@ -95,8 +136,9 @@ class FunctionExpression extends Component {
         let body = maybeRender(this.props.node.body);
         body.props.indent = this.props.indent + "    ";
 
+        let { node } = this.props;
         let params = [];
-        this.props.node.params.forEach((param, index) => {
+        node.params.forEach((param, index) => {
             if (index > 0) {
                 params.push(", ");
             }
@@ -117,7 +159,8 @@ class Placeholder extends Component {
 
 class ReturnStatement extends Component {
     render() {
-        let expression = maybeRender(this.props.node.argument);
+        let { node } = this.props;
+        let expression = maybeRender(node.argument);
         let style = {
             color: "#00F"
         };
@@ -135,7 +178,8 @@ class VariableDeclaration extends Component {
 
 class ExpressionStatement extends Component {
     render() {
-        let expression = maybeRender(this.props.node.expression);
+        let { node } = this.props;
+        let expression = maybeRender(node.expression);
         return <div>{this.props.indent}{expression};</div>;
     }
 }
@@ -153,6 +197,7 @@ class BlockStatement extends Component {
 
 class BlankStatement extends Component {
     render() {
+        let { node } = this.props;
         return <div>{"\u200b"}</div>;
     }
 }
@@ -182,17 +227,23 @@ class CallExpression extends Component {
 
 class ForOfStatement extends Component {
     render() {
-        let left = maybeRender(this.props.node.left);
-        let right = maybeRender(this.props.node.right);
-        let block = maybeRender(this.props.node.body);
+        let { node } = this.props;
+        let left = maybeRender(node.left);
+        let right = maybeRender(node.right);
+        let block = maybeRender(node.body);
         block.props.indent = "    ";
         let open = "{";
         let close = "}";
         
+        // TODO handle indentation
         return <div>
-            <div><span style={{color:"#00F"}}>for</span> ({left} of {right}) {open}</div>
+            <div>
+                <span style={{color:"#00F"}}>for</span> ({left} of {right}) {open}
+            </div>
                 {block}
-            <div>{close}</div>
+            <div>
+                {close}
+            </div>
         </div>;
     }
 }
@@ -261,7 +312,7 @@ class Program extends Component {
         let style = {
             position: 'absolute',
             top: 0,
-            left: 0
+            left: 45
         };
         
         let start = Date.now();
@@ -300,9 +351,10 @@ class Cursor extends Component {
     
     render() {
         let cursorWidth = 2;
+        let gutterWidth = 45;
         let style = {
             position: 'absolute',
-            left: this.props.column * 9.60156 - 1,
+            left: this.props.column * 9.60156 - 1 + gutterWidth,
             top: this.props.line * 18,
             width: cursorWidth,
             height: 18,
@@ -324,10 +376,11 @@ class Selection extends Component {
         let lineHeight = 18;
 
         let loc = this.props.node.loc;
-        
+        let gutterWidth = 45;
+
         let style = {
             position: 'absolute',
-            left: loc.start.column * charWidth,
+            left: loc.start.column * charWidth + gutterWidth,
             top: (loc.start.line - 1) * lineHeight,
             width: charWidth * (loc.end.column - loc.start.column),
             height: lineHeight,
@@ -362,7 +415,8 @@ class NodeEditor extends Component {
         let line = Math.floor((elem.scrollTop + e.pageY - elem.offsetTop - 1) / lineHeight);
         
         let charWidth = 9.60156;
-        let column = Math.round((e.pageX - elem.offsetLeft) / charWidth);
+        let gutterWidth = 45;
+        let column = Math.round((e.pageX - elem.offsetLeft - gutterWidth) / charWidth);
 
         console.log(`line = ${line}, column = ${column}`);
         
@@ -371,7 +425,7 @@ class NodeEditor extends Component {
         var { cursorNode } = findNode(prog, line + 1, column);
         console.log("cursorNode = %o", cursorNode);
         
-        if (cursorNode.type === "Placeholder") {
+        if (["Placeholder", "ReturnStatement", "ForOfStatement"].includes(cursorNode.type)) {
             this.setState({ selectedNodes: [cursorNode] });
         } else {
             this.setState({ selectedNodes: [] });
@@ -403,6 +457,8 @@ class NodeEditor extends Component {
             return <Selection node={node} />;
         });
         
+        let { node } = this.props;
+        
         return <div style={style} 
                     contentEditable={true} 
                     onClick={this.handleClick}
@@ -410,7 +466,8 @@ class NodeEditor extends Component {
             {selections}
             <Cursor {...this.state.cursorPosition} 
                     visible={this.state.selectedNodes.length === 0} />
-            <Program {...this.props.node} />
+            <Gutter count={node.loc.end.line} />
+            <Program {...node} />
         </div>;
     }
 }
