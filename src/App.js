@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import prog from './prog';
-import { renderAST } from './codegen'; 
+import { renderAST } from './codegen';
+import { findNode } from './node_utils';
 
 let maybeRender;
 
@@ -33,8 +34,7 @@ class LineComment extends Component {
 class BlockComment extends Component {
     render() {
         let style = {
-            color: "rgb(76, 136, 107)",
-            whiteSpace: "pre"
+            color: "rgb(76, 136, 107)"
         };
         let lines = this.props.node.content.split("\n").map(line => {
             return <div>{" * " + line}</div>;
@@ -258,18 +258,15 @@ maybeRender = function(node) {
 
 class Program extends Component {
     render() {
-        let start = Date.now();
-        let children = this.props.body.map(child => maybeRender(child));
         let style = {
-            fontFamily: 'monospace',
-            fontSize: 16,
-            whiteSpace: 'pre'
+            position: 'absolute',
+            top: 0,
+            left: 0
         };
         
-        let result = <div 
-            style={style}
-            contentEditable={true}>{children}</div>;
-        
+        let start = Date.now();
+        let children = this.props.body.map(child => maybeRender(child));
+        let result = <div style={style}>{children}</div>;
         let elapsed = Date.now() - start;
         console.log(`elapsed = ${elapsed}ms`);
         
@@ -277,9 +274,144 @@ class Program extends Component {
     }
 }
 
-class NodeEditor extends Component {
+class Cursor extends Component {
+    constructor() {
+        super();
+        this.state = {
+            opacity: 1
+        };
+    }
+    
+    componentDidMount() {
+        this.interval = setInterval(() => {
+            if (this.state.opacity === 1) {
+                this.setState({ opacity: 0 });
+            } else {
+                this.setState({ opacity: 1 });
+            }
+        }, 500);
+    }
+    
+    componentWillUnmount() {
+        clearInterval(this.interval);
+    }
+    
+    // TODO when props change reset the interval and opacity
+    
     render() {
-        return <Program {...this.props.node} />;
+        let cursorWidth = 2;
+        let style = {
+            position: 'absolute',
+            left: this.props.column * 9.60156 - 1,
+            top: this.props.line * 18,
+            width: cursorWidth,
+            height: 18,
+            background: 'black',
+            opacity: this.props.visible ? this.state.opacity : 0
+        };
+        
+        return <div style={style}></div>;
+    }
+}
+
+Cursor.defaultProps = {
+    visible: true
+};
+
+class Selection extends Component {
+    render() {
+        let charWidth = 9.60156;
+        let lineHeight = 18;
+
+        let loc = this.props.node.loc;
+        
+        let style = {
+            position: 'absolute',
+            left: loc.start.column * charWidth,
+            top: (loc.start.line - 1) * lineHeight,
+            width: charWidth * (loc.end.column - loc.start.column),
+            height: lineHeight,
+            background: 'rgb(181, 213, 255)'
+        };
+        
+        return <div style={style}></div>;
+    }
+}
+
+class NodeEditor extends Component {
+    constructor(props) {
+        super(props);
+        this.handleClick = this.handleClick.bind(this);
+        this.state = {
+            cursorPosition: {
+                line: 2,
+                column: 4
+            },
+            selectedNodes: []
+        };
+        // TODO: store scrollTop as part of state to maintain scrollTop position
+    }
+
+    handleClick(e) {
+        e.preventDefault();
+
+        let elem = React.findDOMNode(this);
+        
+        // TODO: measures this on componentDidMount or when the font size changes
+        let lineHeight = 18;
+        let line = Math.floor((elem.scrollTop + e.pageY - elem.offsetTop - 1) / lineHeight);
+        
+        let charWidth = 9.60156;
+        let column = Math.round((e.pageX - elem.offsetLeft) / charWidth);
+
+        console.log(`line = ${line}, column = ${column}`);
+        
+        this.setState({ cursorPosition: { line, column } });
+        
+        var { cursorNode } = findNode(prog, line + 1, column);
+        console.log("cursorNode = %o", cursorNode);
+        
+        if (cursorNode.type === "Placeholder") {
+            this.setState({ selectedNodes: [cursorNode] });
+        } else {
+            this.setState({ selectedNodes: [] });
+        }
+    }
+    
+    handleMouseDown(e) {
+        e.preventDefault();
+    }
+    
+    componentDidMount() {
+        // add location information to the AST
+        renderAST(prog);
+    }
+    
+    render() {
+        let style = {
+            fontFamily: 'monospace',
+            fontSize: 16,
+            whiteSpace: 'pre',
+            border: "solid 1px black",
+            height: 500,
+            overflowY: "scroll",
+            outline: 'none',
+            position: 'relative'
+        };
+        
+        let selections = this.state.selectedNodes.map(node => {
+            return <Selection node={node} />;
+        });
+        
+        return <div style={style} 
+                    contentEditable={true} 
+                    onClick={this.handleClick}
+                    onMouseDown={this.handleMouseDown}>
+            {selections}
+            <Cursor {...this.state.cursorPosition} 
+                    visible={this.state.selectedNodes.length === 0} />
+            <Program {...this.props.node} />
+        </div>;
     }
 }
 
@@ -322,12 +454,12 @@ class LineEditor extends Component {
             overflowY: "scroll"
         };
         
-        return <div 
-            style={style} 
-            contentEditable={true}
-            onKeyPress={this.handleKeyPress}
-            onKeyDown={this.handleKeyDown}
-            >{lines}</div>;
+        return <div style={style} 
+                    contentEditable={true}
+                    onKeyPress={this.handleKeyPress}
+                    onKeyDown={this.handleKeyDown}>
+            {lines}
+        </div>;
     }
 }
 
