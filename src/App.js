@@ -333,7 +333,7 @@ class Cursor extends Component {
         };
     }
     
-    componentDidMount() {
+    startBlinking() {
         this.interval = setInterval(() => {
             if (this.state.opacity === 1) {
                 this.setState({ opacity: 0 });
@@ -343,12 +343,22 @@ class Cursor extends Component {
         }, 500);
     }
     
+    componentDidMount() {
+        this.startBlinking();
+    }
+    
     componentWillUnmount() {
         clearInterval(this.interval);
     }
-    
-    // TODO when props change reset the interval and opacity
-    
+
+    componentWillUpdate(nextProps, nextState) {
+        if (nextProps.column !== this.props.column && nextProps.line !== this.props.line) {
+            clearInterval(this.interval);
+            this.setState({ opacity: 1 });
+            this.startBlinking();
+        }
+    }
+
     render() {
         let cursorWidth = 2;
         let gutterWidth = 45;
@@ -435,8 +445,8 @@ class NodeEditor extends Component {
     handleMouseDown(e) {
         e.preventDefault();
     }
-    
-    componentDidMount() {
+
+    componentWillMount() {
         // add location information to the AST
         renderAST(prog);
     }
