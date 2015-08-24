@@ -5,24 +5,6 @@ import { findNode } from './node_utils';
 
 let maybeRender;
 
-class LineNumber extends Component {
-    render() {
-        let { node } = this.props;
-        let line = this.props.start ? node.loc.start.line : node.loc.end.line;
-        let style = {
-            width: 40,
-            textAlign: 'right',
-            backgroundColor: '#CCC',
-            display: 'inline-block'
-        };
-        return <span style={style}>{line}</span>;
-    }
-}
-
-LineNumber.defaultProps = {
-    start: true
-};
-
 class Gutter extends Component {
     render() {
         let count = this.props.count;
@@ -384,22 +366,58 @@ class Selection extends Component {
     render() {
         let charWidth = 9.60156;
         let lineHeight = 18;
-
-        let loc = this.props.node.loc;
         let gutterWidth = 45;
+        
+        let { node } = this.props;
 
         let style = {
             position: 'absolute',
-            left: loc.start.column * charWidth + gutterWidth,
-            top: (loc.start.line - 1) * lineHeight,
-            width: charWidth * (loc.end.column - loc.start.column),
             height: lineHeight,
             background: 'rgb(181, 213, 255)'
         };
         
+        if (node.type === "BinaryExpression") {
+            let line = node.left.loc.end.line;
+            let column = node.left.loc.end.column + 1;
+
+            Object.assign(style, {
+                left: column * charWidth + gutterWidth,
+                top: (line - 1) * lineHeight,
+                width: charWidth * node.operator.length
+            });
+        } else if (node.type === "ReturnStatement") {
+            let line = node.loc.start.line;
+            let column = node.loc.start.column;
+            Object.assign(style, {
+                left: column * charWidth + gutterWidth,
+                top: (line - 1) * lineHeight,
+                width: charWidth * 6
+            });
+        } else {
+            let loc = node.loc;
+            Object.assign(style, {
+                left: loc.start.column * charWidth + gutterWidth,
+                top: (loc.start.line - 1) * lineHeight,
+                width: charWidth * (loc.end.column - loc.start.column)
+            });
+        }
+        
         return <div style={style}></div>;
     }
 }
+
+let leafNodeTypes = [
+    "Literal",
+    "Identifier",
+    "StringLiteral",
+    "Placeholder",
+    "CallExpression",
+    "ThisExpression",
+    "BlankStatement",
+    "BinaryExpression",
+    "AssignmentExpression",
+    "ReturnStatement"
+];
 
 class NodeEditor extends Component {
     constructor(props) {
@@ -428,18 +446,22 @@ class NodeEditor extends Component {
         let gutterWidth = 45;
         let column = Math.round((e.pageX - elem.offsetLeft - gutterWidth) / charWidth);
 
-        console.log(`line = ${line}, column = ${column}`);
+        let { cursorNode } = findNode(prog, line + 1, column);
+        // TODO: check if it's a leaf node
         
-        this.setState({ cursorPosition: { line, column } });
-        
-        var { cursorNode } = findNode(prog, line + 1, column);
-        console.log("cursorNode = %o", cursorNode);
-        
-        if (["Placeholder", "ReturnStatement", "ForOfStatement"].includes(cursorNode.type)) {
-            this.setState({ selectedNodes: [cursorNode] });
-        } else {
-            this.setState({ selectedNodes: [] });
+        if (leafNodeTypes.includes(cursorNode.type)) {
+            console.log("cursorNode = %o", cursorNode);
+            //console.log(`line = ${line}, column = ${column}`);
+
+            this.setState({ cursorPosition: { line, column } });
+
+            if (["Placeholder", "BinaryExpression", "ReturnStatement"].includes(cursorNode.type)) {
+                this.setState({ selectedNodes: [cursorNode] });
+            } else {
+                this.setState({ selectedNodes: [] });
+            }
         }
+        
     }
     
     handleMouseDown(e) {
@@ -469,8 +491,8 @@ class NodeEditor extends Component {
         
         let { node } = this.props;
         
+        // TODO use the delegate pattern to determine cursor visibility
         return <div style={style} 
-                    contentEditable={true} 
                     onClick={this.handleClick}
                     onMouseDown={this.handleMouseDown}>
             {selections}
@@ -522,7 +544,6 @@ class LineEditor extends Component {
         };
         
         return <div style={style} 
-                    contentEditable={true}
                     onKeyPress={this.handleKeyPress}
                     onKeyDown={this.handleKeyDown}>
             {lines}
