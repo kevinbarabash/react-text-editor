@@ -258,6 +258,12 @@ class Literal extends Component {
     }
 }
 
+class StringLiteral extends Component {
+    render() {
+        return <span style={{color:"#900"}}>"{this.props.node.value}"</span>;
+    }
+}
+
 let components = {
     ForOfStatement,
     VariableDeclaration,
@@ -278,7 +284,8 @@ let components = {
     MethodDefinition,
     FunctionExpression,
     ReturnStatement,
-    Placeholder
+    Placeholder,
+    StringLiteral
 };
 
 maybeRender = function(node) {
@@ -336,8 +343,8 @@ class Cursor extends Component {
     componentWillUpdate(nextProps, nextState) {
         if (nextProps.column !== this.props.column && nextProps.line !== this.props.line) {
             clearInterval(this.interval);
-            this.setState({ opacity: 1 });
             this.startBlinking();
+            this.setState({ opacity: 1 });
         }
     }
 
@@ -423,12 +430,14 @@ class NodeEditor extends Component {
     constructor(props) {
         super(props);
         this.handleClick = this.handleClick.bind(this);
+        this.handleKeyDown = this.handleKeyDown.bind(this);
         this.state = {
             cursorPosition: {
                 line: 2,
                 column: 4
             },
-            selectedNodes: []
+            selectedNodes: [],
+            cursorNode: null
         };
         // TODO: store scrollTop as part of state to maintain scrollTop position
     }
@@ -453,7 +462,10 @@ class NodeEditor extends Component {
             console.log("cursorNode = %o", cursorNode);
             //console.log(`line = ${line}, column = ${column}`);
 
-            this.setState({ cursorPosition: { line, column } });
+            this.setState({ 
+                cursorPosition: { line, column },
+                cursorNode
+            });
 
             if (["Placeholder", "BinaryExpression", "ReturnStatement"].includes(cursorNode.type)) {
                 this.setState({ selectedNodes: [cursorNode] });
@@ -461,11 +473,31 @@ class NodeEditor extends Component {
                 this.setState({ selectedNodes: [] });
             }
         }
-        
     }
-    
-    handleMouseDown(e) {
-        e.preventDefault();
+
+    handleKeyDown(e) {
+        let node = this.state.cursorNode;
+        
+        if (["Identifier", "Literal", "StringLiteral"].includes(node.type)) {
+            let column = this.state.cursorPosition.column;
+            let relIdx = column - node.loc.start.column;
+            let width = node.loc.end.column - node.loc.start.column;
+
+            if (e.keyCode === 37) {
+                if (relIdx > 0) {
+                    column--;
+                    this.setState({ cursorPosition: { column }});
+                }
+                console.log("left");
+            } else if (e.keyCode === 39) {
+                if (relIdx < width) {
+                    column++;
+                    this.setState({ cursorPosition: { column }});
+                }
+                console.log("right");
+            }
+        }
+       
     }
 
     componentWillMount() {
@@ -494,7 +526,8 @@ class NodeEditor extends Component {
         // TODO use the delegate pattern to determine cursor visibility
         return <div style={style} 
                     onClick={this.handleClick}
-                    onMouseDown={this.handleMouseDown}>
+                    onKeyDown={this.handleKeyDown}
+                    tabIndex={0}>
             {selections}
             <Cursor {...this.state.cursorPosition} 
                     visible={this.state.selectedNodes.length === 0} />

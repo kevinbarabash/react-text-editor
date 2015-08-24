@@ -30,7 +30,7 @@ var prog = {
                 type: "ArrayExpression",
                 elements: [
                     { type: "Literal", raw: "1.0" },
-                    { type: "Literal", raw: "2.0" },
+                    { type: "StringLiteral", value: "hello" },
                     { type: "Literal", raw: "3.0" }
                 ]
             },
