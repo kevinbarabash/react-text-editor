@@ -31,7 +31,12 @@ var prog = {
                 elements: [
                     { type: "Literal", raw: "1.0" },
                     { type: "StringLiteral", value: "hello" },
-                    { type: "Literal", raw: "3.0" }
+                    {
+                        type: "BinaryExpression",
+                        left: { type: "Literal", raw: "-5" },
+                        right: { type: "Literal", raw: "-7" },
+                        operator: "-"
+                    }
                 ]
             },
             body: {
