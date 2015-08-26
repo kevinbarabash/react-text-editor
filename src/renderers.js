@@ -241,6 +241,24 @@ class StringLiteral extends Component {
     }
 }
 
+class Program extends Component {
+    render() {
+        let style = {
+            position: 'absolute',
+            top: 0,
+            left: 45
+        };
+
+        let start = Date.now();
+        let children = this.props.body.map(child => maybeRender(child));
+        let result = <div style={style}>{children}</div>;
+        let elapsed = Date.now() - start;
+        console.log(`elapsed = ${elapsed}ms`);
+
+        return result;
+    }
+}
+
 let components = {
     ForOfStatement,
     VariableDeclaration,
@@ -273,24 +291,4 @@ maybeRender = function(node) {
     }
 };
 
-class Program extends Component {
-    render() {
-        let style = {
-            position: 'absolute',
-            top: 0,
-            left: 45
-        };
-
-        let start = Date.now();
-        let children = this.props.body.map(child => maybeRender(child));
-        let result = <div style={style}>{children}</div>;
-        let elapsed = Date.now() - start;
-        console.log(`elapsed = ${elapsed}ms`);
-
-        return result;
-    }
-}
-
-module.exports = {
-    Program
-};
+export { Program };
