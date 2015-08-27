@@ -12,24 +12,39 @@ import Gutter from './gutter';
 // anything that's rendered should be contained with in a leaf node
 // not just a plain old string
 
-//function getPreviousNode(node, path) {
-//    let parent = path[path.length - 2];
-//    if (parent) {
-//        if (parent.type === "BinaryExpression") {
-//            if (parent.right === node) {
-//                return parent.operator;
-//            } else if (parent.operator === node) {
-//                return parent.left;
-//            } else if (parent.left === node) {
-//                return getPreviousNode(parent, path);
-//            }
-//        }
-//    }
-//}
-//
-//function getNextNode(node, path) {
-//    
-//}
+// TODO: have arrays that list the names of all child props for each node
+// TODO: ... in order
+
+function getPreviousNode(node, path) {
+    let parent = path[path.length - 2];
+    if (parent) {
+        if (parent.type === "BinaryExpression") {
+            if (parent.right === node) {
+                return parent.operator;
+            } else if (parent.operator === node) {
+                return parent.left;
+            } else if (parent.left === node) {
+                return getPreviousNode(parent, path);
+            }
+        }
+    }
+}
+
+function getNextNode(node, path) {
+    let parent = path[path.length - 2];
+    if (parent) {
+        if (parent.type === "BinaryExpression") {
+            if (parent.left === node) {
+                return parent.operator;
+            } else if (parent.operator === node) {
+                return parent.right;
+            } else if (parent.right === node) {
+                return getNextNode(parent, path);
+            }
+        }
+    }
+}
+
 
 let leafNodeTypes = [
     "Literal",
@@ -73,7 +88,8 @@ class NodeEditor extends Component {
         let charWidth = 9.60156;
         let gutterWidth = 45;
         let column = Math.round((e.pageX - elem.offsetLeft - gutterWidth) / charWidth);
-
+        
+        // TODO: line numbers for editor and AST should match
         let { cursorNode } = findNode(this.props.node, line + 1, column);
         // TODO: check if it's a leaf node
 
@@ -96,32 +112,89 @@ class NodeEditor extends Component {
 
     handleKeyDown(e) {
         let node = this.state.cursorNode;
-
+        let column = this.state.cursorPosition.column;
+        let line = this.state.cursorPosition.line;
+        
         if (["Identifier", "Literal", "StringLiteral"].includes(node.type)) {
-            let column = this.state.cursorPosition.column;
-            let line = this.state.cursorPosition.line;
             let relIdx = column - node.loc.start.column;
             let width = node.loc.end.column - node.loc.start.column;
 
-            // TODO: change this to be "root"
             let root = this.props.node;
+            let path = findNodePath(root, line + 1, column);
             
             if (e.keyCode === 37) {
                 if (relIdx > 0) {
                     column--;
                     this.setState({ cursorPosition: { column, line }});
                 } else {
-                    let path = findNodePath(root, line + 1, column);
-                    //let previousNode = getPreviousNode(node, path);
-                    //console.log(previousNode);
+                    let previousNode = getPreviousNode(node, path);
+
+                    if (previousNode) {
+                        let cursorNode = previousNode;
+                        column = cursorNode.loc.end.column;
+                        line = cursorNode.loc.end.line - 1;
+                        this.setState({ cursorPosition: { column, line }, cursorNode });
+                        if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+                            this.setState({ selectedNodes: [cursorNode] });
+                        } else {
+                            this.setState({ selectedNodes: [] });
+                        }
+                    }
                 }
                 console.log("left");
             } else if (e.keyCode === 39) {
                 if (relIdx < width) {
                     column++;
                     this.setState({ cursorPosition: { column, line }});
+                } else {
+                    let nextNode = getNextNode(node, path);
+
+                    if (nextNode) {
+                        let cursorNode = nextNode;
+                        column = cursorNode.loc.start.column;
+                        line = cursorNode.loc.start.line - 1;
+                        this.setState({ cursorPosition: { column, line }, cursorNode });
+                        if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+                            this.setState({ selectedNodes: [cursorNode] });
+                        } else {
+                            this.setState({ selectedNodes: [] });
+                        }
+                    }
                 }
                 console.log("right");
+            }
+        } else {
+            let root = this.props.node;
+            let path = findNodePath(root, line + 1, column);
+            
+            if (e.keyCode === 37) {
+                let previousNode = getPreviousNode(node, path);
+                
+                if (previousNode) {
+                    let cursorNode = previousNode;
+                    column = cursorNode.loc.end.column;
+                    line = cursorNode.loc.end.line - 1;
+                    this.setState({ cursorPosition: { column, line }, cursorNode });
+                    if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+                        this.setState({ selectedNodes: [cursorNode] });
+                    } else {
+                        this.setState({ selectedNodes: [] });
+                    }
+                }
+            } else if (e.keyCode === 39) {
+                let nextNode = getNextNode(node, path);
+
+                if (nextNode) {
+                    let cursorNode = nextNode;
+                    column = cursorNode.loc.start.column;
+                    line = cursorNode.loc.start.line - 1;
+                    this.setState({ cursorPosition: { column, line }, cursorNode });
+                    if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+                        this.setState({ selectedNodes: [cursorNode] });
+                    } else {
+                        this.setState({ selectedNodes: [] });
+                    }
+                }
             }
         }
 
