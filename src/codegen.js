@@ -48,8 +48,9 @@ let renderer = {
             node.loc = {};
             let result = render(node.id);
             node.loc.start = node.id.loc.start;
-            result += " = ";
-            column += 3;    // " = ".length
+            column++;
+            result += render(node.operator);
+            column++;
             result += render(node.init);
             node.loc.end = node.init.loc.end;
             return result;
@@ -186,7 +187,9 @@ let renderer = {
     },
     AssignmentExpression(node) {
         let left = render(node.left);
-        column += node.operator.length + 2; // 2 for spaces on either side
+        column++;
+        let operator = render(node.operator);
+        column++;
         let right = render(node.right);
 
         node.loc = {
@@ -194,7 +197,7 @@ let renderer = {
             end: node.right.loc.end
         };
 
-        return `${left} ${node.operator} ${right}`;
+        return `${left} ${operator} ${right}`;
     },
     ReturnStatement(node) {
         node.loc = {};
@@ -242,7 +245,9 @@ let renderer = {
     },
     BinaryExpression(node) {
         let left = render(node.left);
-        column += 3;    // e.g. " + ".length;
+        column++;
+        let operator = render(node.operator);
+        column++;
         let right = render(node.right);
 
         node.loc = {
@@ -250,7 +255,7 @@ let renderer = {
             end: node.right.loc.end
         };
 
-        return `${left} ${node.operator} ${right}`;
+        return `${left} ${operator} ${right}`;
     },
     Parentheses(node) {
         node.loc = {};
@@ -444,6 +449,13 @@ let renderer = {
         node.loc.end = { line, column };
 
         return result;
+    },
+    Operator(node) {
+        node.loc = {};
+        node.loc.start = { line, column };
+        column += node.operator.length;
+        node.loc.end = { line, column };
+        return ` ${node.operator} `;
     }
 };
 

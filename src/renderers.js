@@ -165,7 +165,7 @@ class AssignmentExpression extends Component {
     render() {
         let left = maybeRender(this.props.node.left);
         let right = maybeRender(this.props.node.right);
-        let operator = this.props.node.operator;
+        let operator = maybeRender(this.props.node.operator);
         return <span>{left} {operator} {right}</span>;
     }
 }
@@ -211,7 +211,7 @@ class BinaryExpression extends Component {
     render() {
         let left = maybeRender(this.props.node.left);
         let right = maybeRender(this.props.node.right);
-        let operator = this.props.node.operator;
+        let operator = maybeRender(this.props.node.operator);
         return <span>{left} {operator} {right}</span>;
     }
 }
@@ -238,6 +238,12 @@ class Literal extends Component {
 class StringLiteral extends Component {
     render() {
         return <span style={{color:"#900"}}>"{this.props.node.value}"</span>;
+    }
+}
+
+class Operator extends Component {
+    render() {
+        return <span>{this.props.node.operator}</span>;
     }
 }
 
@@ -280,7 +286,8 @@ let components = {
     FunctionExpression,
     ReturnStatement,
     Placeholder,
-    StringLiteral
+    StringLiteral,
+    Operator
 };
 
 maybeRender = function(node) {

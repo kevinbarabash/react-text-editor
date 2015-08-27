@@ -41,7 +41,8 @@ let leafNodeTypes = [
     "BlankStatement",
     "BinaryExpression",
     "AssignmentExpression",
-    "ReturnStatement"
+    "ReturnStatement",
+    "Operator"
 ];
 
 class NodeEditor extends Component {
@@ -78,14 +79,14 @@ class NodeEditor extends Component {
 
         if (leafNodeTypes.includes(cursorNode.type)) {
             console.log("cursorNode = %o", cursorNode);
-            //console.log(`line = ${line}, column = ${column}`);
+            console.log(`line = ${line}, column = ${column}`);
 
             this.setState({
                 cursorPosition: { line, column },
                 cursorNode
             });
 
-            if (["Placeholder", "BinaryExpression", "ReturnStatement"].includes(cursorNode.type)) {
+            if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
                 this.setState({ selectedNodes: [cursorNode] });
             } else {
                 this.setState({ selectedNodes: [] });
