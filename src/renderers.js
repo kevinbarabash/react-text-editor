@@ -46,6 +46,7 @@ class BlockComment extends Component {
 }
 
 class ClassDeclaration extends Component {
+    // TODO handle 'extends' syntax
     render() {
         let { node } = this.props;
         let id = maybeRender(node.id);

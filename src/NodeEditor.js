@@ -8,21 +8,63 @@ import Selection from './selection';
 import Cursor from './cursor';
 import Gutter from './gutter';
 
+import { leaves, orderings } from './ast_data';
 
-// TODO: have arrays that list the names of all child props for each node
-// TODO: ... in order
+// TODO: handle empty arguments, elements, etc.
+
+function getRightmostLeaf(node) {
+    if (Array.isArray(node)) {
+        return getRightmostLeaf(node[node.length - 1]);
+    }
+    if (leaves.includes(node.type)) {
+        return node;
+    } 
+    let ordering = orderings[node.type];
+    return getRightmostLeaf(node[ordering[ordering.length - 1]]);
+}
+
+function getLeftmostLeaf(node) {
+    if (Array.isArray(node)) {
+        return getLeftmostLeaf(node[0]);
+    }
+    if (leaves.includes(node.type)) {
+        return node;
+    }
+    let ordering = orderings[node.type];
+    return getLeftmostLeaf(node[ordering[0]]);
+}
 
 function getPreviousNode(node, path) {
     let parent = path[path.length - 2];
     if (parent) {
-        if (parent.type === "BinaryExpression") {
-            if (parent.right === node) {
-                return parent.operator;
-            } else if (parent.operator === node) {
-                return parent.left;
-            } else if (parent.left === node) {
+        let ordering = orderings[parent.type];
+        for (let i = ordering.length - 1; i > 0; i--) {
+            let currentNode = parent[ordering[i]];
+            if (currentNode === node) {
+                return getRightmostLeaf(parent[ordering[i - 1]]);
+            }
+            if (Array.isArray(currentNode)) {
+                let idx = currentNode.findIndex(child => child === node);
+                if (idx > 0) {
+                    return getRightmostLeaf(currentNode[idx - 1]);
+                } else {
+                    return getRightmostLeaf(parent[ordering[i - 1]]);
+                }
+            }
+        }
+        let firstNode = parent[ordering[0]];
+        if (Array.isArray(firstNode)) {
+            let idx = firstNode.findIndex(child => child === node);
+            if (idx > 0) {
+                return getRightmostLeaf(firstNode[idx - 1]);
+            } else {
+                path.pop();
                 return getPreviousNode(parent, path);
             }
+        }
+        if (firstNode === node) {
+            path.pop();
+            return getPreviousNode(parent, path);
         }
     }
 }
@@ -30,18 +72,37 @@ function getPreviousNode(node, path) {
 function getNextNode(node, path) {
     let parent = path[path.length - 2];
     if (parent) {
-        if (parent.type === "BinaryExpression") {
-            if (parent.left === node) {
-                return parent.operator;
-            } else if (parent.operator === node) {
-                return parent.right;
-            } else if (parent.right === node) {
+        let ordering = orderings[parent.type];
+        for (let i = 0; i < ordering.length - 1; i++) {
+            let currentNode = parent[ordering[i]];
+            if (currentNode === node) {
+                return getLeftmostLeaf(parent[ordering[i + 1]]);
+            }
+            if (Array.isArray(currentNode)) {
+                let idx = currentNode.findIndex(child => child === node);
+                if (idx < currentNode.length - 1) {
+                    return getLeftmostLeaf(currentNode[idx + 1]);
+                } else {
+                    return getLeftmostLeaf(parent[ordering[i + 1]]);
+                }
+            }
+        }
+        let lastNode = parent[ordering[ordering.length - 1]];
+        if (Array.isArray(lastNode)) {
+            let idx = lastNode.findIndex(child => child === node);
+            if (idx < lastNode.length - 1) {
+                return getLeftmostLeaf(lastNode[idx + 1]);
+            } else {
+                path.pop();
                 return getNextNode(parent, path);
             }
         }
+        if (lastNode === node) {
+            path.pop();
+            return getNextNode(parent, path);
+        }
     }
 }
-
 
 let leafNodeTypes = [
     "Literal",
