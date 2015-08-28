@@ -40,7 +40,7 @@ class Cursor extends Component {
         let style = {
             position: 'absolute',
             left: this.props.column * 9.60156 - 1 + gutterWidth,
-            top: this.props.line * 18,
+            top: (this.props.line - 1)   * 18,
             width: cursorWidth,
             height: 18,
             background: 'black',

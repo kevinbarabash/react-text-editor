@@ -8,9 +8,6 @@ import Selection from './selection';
 import Cursor from './cursor';
 import Gutter from './gutter';
 
-// TODO: make 'operator' a real node instead of just a string
-// anything that's rendered should be contained with in a leaf node
-// not just a plain old string
 
 // TODO: have arrays that list the names of all child props for each node
 // TODO: ... in order
@@ -83,14 +80,13 @@ class NodeEditor extends Component {
 
         // TODO: measures this on componentDidMount or when the font size changes
         let lineHeight = 18;
-        let line = Math.floor((elem.scrollTop + e.pageY - elem.offsetTop - 1) / lineHeight);
+        let line = Math.floor((elem.scrollTop + e.pageY - elem.offsetTop - 1) / lineHeight) + 1;
 
         let charWidth = 9.60156;
         let gutterWidth = 45;
         let column = Math.round((e.pageX - elem.offsetLeft - gutterWidth) / charWidth);
         
-        // TODO: line numbers for editor and AST should match
-        let { cursorNode } = findNode(this.props.node, line + 1, column);
+        let { cursorNode } = findNode(this.props.node, line, column);
         // TODO: check if it's a leaf node
 
         if (leafNodeTypes.includes(cursorNode.type)) {
@@ -120,7 +116,7 @@ class NodeEditor extends Component {
             let width = node.loc.end.column - node.loc.start.column;
 
             let root = this.props.node;
-            let path = findNodePath(root, line + 1, column);
+            let path = findNodePath(root, line, column);
             
             if (e.keyCode === 37) {
                 if (relIdx > 0) {
@@ -132,7 +128,7 @@ class NodeEditor extends Component {
                     if (previousNode) {
                         let cursorNode = previousNode;
                         column = cursorNode.loc.end.column;
-                        line = cursorNode.loc.end.line - 1;
+                        line = cursorNode.loc.end.line;
                         this.setState({ cursorPosition: { column, line }, cursorNode });
                         if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
                             this.setState({ selectedNodes: [cursorNode] });
@@ -152,7 +148,7 @@ class NodeEditor extends Component {
                     if (nextNode) {
                         let cursorNode = nextNode;
                         column = cursorNode.loc.start.column;
-                        line = cursorNode.loc.start.line - 1;
+                        line = cursorNode.loc.start.line;
                         this.setState({ cursorPosition: { column, line }, cursorNode });
                         if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
                             this.setState({ selectedNodes: [cursorNode] });
@@ -165,7 +161,7 @@ class NodeEditor extends Component {
             }
         } else {
             let root = this.props.node;
-            let path = findNodePath(root, line + 1, column);
+            let path = findNodePath(root, line, column);
             
             if (e.keyCode === 37) {
                 let previousNode = getPreviousNode(node, path);
@@ -173,7 +169,7 @@ class NodeEditor extends Component {
                 if (previousNode) {
                     let cursorNode = previousNode;
                     column = cursorNode.loc.end.column;
-                    line = cursorNode.loc.end.line - 1;
+                    line = cursorNode.loc.end.line;
                     this.setState({ cursorPosition: { column, line }, cursorNode });
                     if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
                         this.setState({ selectedNodes: [cursorNode] });
@@ -187,7 +183,7 @@ class NodeEditor extends Component {
                 if (nextNode) {
                     let cursorNode = nextNode;
                     column = cursorNode.loc.start.column;
-                    line = cursorNode.loc.start.line - 1;
+                    line = cursorNode.loc.start.line;
                     this.setState({ cursorPosition: { column, line }, cursorNode });
                     if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
                         this.setState({ selectedNodes: [cursorNode] });
