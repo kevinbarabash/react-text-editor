@@ -20,7 +20,15 @@ function getRightmostLeaf(node) {
         return node;
     } 
     let ordering = orderings[node.type];
-    return getRightmostLeaf(node[ordering[ordering.length - 1]]);
+    let lastNode = null;
+    for (let i = ordering.length - 1; i > -1; i--) {
+        lastNode = node[ordering[i]];
+        if (lastNode) {
+            break;
+        }
+    }
+    // TODO: handle case when lastNode is still null
+    return getRightmostLeaf(lastNode);
 }
 
 function getLeftmostLeaf(node) {
@@ -31,7 +39,15 @@ function getLeftmostLeaf(node) {
         return node;
     }
     let ordering = orderings[node.type];
-    return getLeftmostLeaf(node[ordering[0]]);
+    let firstNode = null;
+    for (let i = 0; i < ordering.length; i++) {
+        firstNode = node[ordering[i]];
+        if (firstNode) {
+            break;
+        }
+    }
+    // TODO: handle case when firstNode is still null
+    return getLeftmostLeaf(firstNode);
 }
 
 function getPreviousNode(node, path) {
@@ -41,13 +57,18 @@ function getPreviousNode(node, path) {
         for (let i = ordering.length - 1; i > 0; i--) {
             let currentNode = parent[ordering[i]];
             if (currentNode === node) {
-                return getRightmostLeaf(parent[ordering[i - 1]]);
+                let previousNode = parent[ordering[i - 1]];
+                if (previousNode === null) {
+                    path.pop();
+                    return getPreviousNode(parent, path);
+                }
+                return getRightmostLeaf(previousNode);
             }
             if (Array.isArray(currentNode)) {
                 let idx = currentNode.findIndex(child => child === node);
                 if (idx > 0) {
                     return getRightmostLeaf(currentNode[idx - 1]);
-                } else {
+                } else if (idx === 0) {
                     return getRightmostLeaf(parent[ordering[i - 1]]);
                 }
             }
@@ -56,7 +77,12 @@ function getPreviousNode(node, path) {
         if (Array.isArray(firstNode)) {
             let idx = firstNode.findIndex(child => child === node);
             if (idx > 0) {
-                return getRightmostLeaf(firstNode[idx - 1]);
+                let previousNode = firstNode[idx - 1];
+                if (previousNode === null) {
+                    path.pop();
+                    return getPreviousNode(parent, path);
+                }
+                return getRightmostLeaf(previousNode);
             } else {
                 path.pop();
                 return getPreviousNode(parent, path);
@@ -76,13 +102,18 @@ function getNextNode(node, path) {
         for (let i = 0; i < ordering.length - 1; i++) {
             let currentNode = parent[ordering[i]];
             if (currentNode === node) {
-                return getLeftmostLeaf(parent[ordering[i + 1]]);
+                let nextNode = parent[ordering[i + 1]];
+                if (nextNode === null) {
+                    path.pop();
+                    return getNextNode(parent, path);
+                }
+                return getLeftmostLeaf(nextNode);
             }
             if (Array.isArray(currentNode)) {
                 let idx = currentNode.findIndex(child => child === node);
                 if (idx < currentNode.length - 1) {
                     return getLeftmostLeaf(currentNode[idx + 1]);
-                } else {
+                } else if (idx === 0) {
                     return getLeftmostLeaf(parent[ordering[i + 1]]);
                 }
             }
@@ -91,7 +122,12 @@ function getNextNode(node, path) {
         if (Array.isArray(lastNode)) {
             let idx = lastNode.findIndex(child => child === node);
             if (idx < lastNode.length - 1) {
-                return getLeftmostLeaf(lastNode[idx + 1]);
+                let nextNode = lastNode[idx + 1];
+                if (nextNode === null) {
+                    path.pop();
+                    return getNextNode(parent, path);
+                }
+                return getLeftmostLeaf(nextNode);
             } else {
                 path.pop();
                 return getNextNode(parent, path);

@@ -1,7 +1,7 @@
 
 var orderings = {
     BinaryExpression: ["left", "operator", "right"],
-    VariableDeclaration: ["kind", "declarations"],
+    VariableDeclaration: [/*"kind", */"declarations"],
     VariableDeclarator: ["id", "init"],
     ClassDeclaration: ["id", "body"],   // TODO handle 'extends' syntax
     ClassBody: ["body"],  // if it's an array, we can pick first/last easily
