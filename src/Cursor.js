@@ -37,12 +37,13 @@ class Cursor extends Component {
     render() {
         let cursorWidth = 2;
         let gutterWidth = 45;
+        let { charWidth, charHeight } = this.props;
         let style = {
             position: 'absolute',
-            left: this.props.column * 9.60156 - 1 + gutterWidth,
-            top: (this.props.line - 1)   * 18,
+            left: this.props.column * charWidth - 1 + gutterWidth,
+            top: (this.props.line - 1) * charHeight,
             width: cursorWidth,
-            height: 18,
+            height: charHeight,
             background: 'black',
             opacity: this.props.visible ? this.state.opacity : 0
         };

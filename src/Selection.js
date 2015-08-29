@@ -2,15 +2,14 @@ import React, { Component } from 'react';
 
 class Selection extends Component {
     render() {
-        let charWidth = 9.60156;
-        let lineHeight = 18;
+        let { charWidth, charHeight } = this.props;
         let gutterWidth = 45;
 
         let { node } = this.props;
 
         let style = {
             position: 'absolute',
-            height: lineHeight,
+            height: charHeight,
             background: 'rgb(181, 213, 255)'
         };
 
@@ -20,7 +19,7 @@ class Selection extends Component {
 
             Object.assign(style, {
                 left: column * charWidth + gutterWidth,
-                top: (line - 1) * lineHeight,
+                top: (line - 1) * charHeight,
                 width: charWidth * node.operator.length
             });
         } else if (node.type === "ReturnStatement") {
@@ -28,14 +27,14 @@ class Selection extends Component {
             let column = node.loc.start.column;
             Object.assign(style, {
                 left: column * charWidth + gutterWidth,
-                top: (line - 1) * lineHeight,
+                top: (line - 1) * charHeight,
                 width: charWidth * 6
             });
         } else {
             let loc = node.loc;
             Object.assign(style, {
                 left: loc.start.column * charWidth + gutterWidth,
-                top: (loc.start.line - 1) * lineHeight,
+                top: (loc.start.line - 1) * charHeight,
                 width: charWidth * (loc.end.column - loc.start.column)
             });
         }

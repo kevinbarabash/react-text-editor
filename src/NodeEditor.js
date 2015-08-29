@@ -160,6 +160,9 @@ class NodeEditor extends Component {
         this.handleClick = this.handleClick.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.state = {
+            fontSize: 18,
+            charWidth: 0,
+            charHeight: 0,
             cursorPosition: {
                 line: 2,
                 column: 4
@@ -176,10 +179,9 @@ class NodeEditor extends Component {
         let elem = React.findDOMNode(this);
 
         // TODO: measures this on componentDidMount or when the font size changes
-        let lineHeight = 18;
-        let line = Math.floor((elem.scrollTop + e.pageY - elem.offsetTop - 1) / lineHeight) + 1;
+        let { charWidth, charHeight } = this.state;
+        let line = Math.floor((elem.scrollTop + e.pageY - elem.offsetTop - 1) / charHeight) + 1;
 
-        let charWidth = 9.60156;
         let gutterWidth = 45;
         let column = Math.round((e.pageX - elem.offsetLeft - gutterWidth) / charWidth);
         
@@ -296,12 +298,25 @@ class NodeEditor extends Component {
     componentWillMount() {
         // add location information to the AST
         renderAST(this.props.node);
+
+        var span = document.createElement('span');
+        document.body.appendChild(span);
+        span.innerHTML = '&nbsp;';
+        span.style.fontSize = this.state.fontSize + 'px';
+        span.style.fontFamily = 'monospace';
+        var bbox = span.getBoundingClientRect();
+        console.log(`height = ${bbox.height}`);
+        console.log(`width = ${bbox.width}`);
+        this.setState({ 
+            charWidth: bbox.width,
+            charHeight: bbox.height
+        });
     }
 
     render() {
         let style = {
             fontFamily: 'monospace',
-            fontSize: 16,
+            fontSize: this.state.fontSize,
             whiteSpace: 'pre',
             border: "solid 1px black",
             height: 500,
@@ -310,8 +325,10 @@ class NodeEditor extends Component {
             position: 'relative'
         };
 
+        let { charWidth, charHeight } = this.state;
+
         let selections = this.state.selectedNodes.map(node => {
-            return <Selection node={node} />;
+            return <Selection charWidth={charWidth} charHeight={charHeight} node={node} />;
         });
 
         let { node } = this.props;
@@ -323,7 +340,10 @@ class NodeEditor extends Component {
                     tabIndex={0}>
             {selections}
             <Cursor {...this.state.cursorPosition}
-                visible={this.state.selectedNodes.length === 0} />
+                visible={this.state.selectedNodes.length === 0}
+                charWidth={charWidth}
+                charHeight={charHeight}
+            />
             <Gutter count={node.loc.end.line} />
             <Program {...node} />
         </div>;
