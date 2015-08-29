@@ -141,7 +141,7 @@ function getNextNode(node, path) {
 }
 
 let leafNodeTypes = [
-    "Literal",
+    "NumberLiteral",
     "Identifier",
     "StringLiteral",
     "Placeholder",
@@ -210,7 +210,7 @@ class NodeEditor extends Component {
         let column = this.state.cursorPosition.column;
         let line = this.state.cursorPosition.line;
         
-        if (["Identifier", "Literal", "StringLiteral"].includes(node.type)) {
+        if (["Identifier", "NumberLiteral", "StringLiteral"].includes(node.type)) {
             let relIdx = column - node.loc.start.column;
             let width = node.loc.end.column - node.loc.start.column;
 

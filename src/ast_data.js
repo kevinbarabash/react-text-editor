@@ -18,7 +18,7 @@ var orderings = {
 };
 
 var leaves = [
-    "Literal", 
+    "NumberLiteral", 
     "StringLiteral", 
     "Identifier", 
     "Operator", 

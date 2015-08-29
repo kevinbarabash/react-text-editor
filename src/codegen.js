@@ -123,17 +123,13 @@ let renderer = {
 
         return result;
     },
-    Literal(node) {
+    NumberLiteral(node) {
         node.loc = {};
         node.loc.start = { line, column };
-        if (node.raw) {
-            column += String(node.raw).length;
-        } else {
-            column += String(node.value).length;
-        }
+        column += String(node.value).length;
         node.loc.end = { line, column };
 
-        return node.raw ? node.raw : node.value;
+        return node.value;
     },
     StringLiteral(node) {
         node.loc = {};

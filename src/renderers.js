@@ -230,9 +230,9 @@ class ArrayExpression extends Component {
     }
 }
 
-class Literal extends Component {
+class NumberLiteral extends Component {
     render() {
-        return <span style={{color:"#00C"}}>{this.props.node.raw}</span>;
+        return <span style={{color:"#00B"}}>{this.props.node.value}</span>;
     }
 }
 
@@ -272,7 +272,7 @@ let components = {
     VariableDeclarator,
     Identifier,
     ArrayExpression,
-    Literal,
+    NumberLiteral,
     BlockStatement,
     ExpressionStatement,
     BlankStatement,

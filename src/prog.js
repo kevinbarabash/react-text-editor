@@ -29,12 +29,12 @@ var prog = {
             right: {
                 type: "ArrayExpression",
                 elements: [
-                    { type: "Literal", raw: "1.0" },
+                    { type: "NumberLiteral", value: "1.0" },
                     { type: "StringLiteral", value: "hello" },
                     {
                         type: "BinaryExpression",
-                        left: { type: "Literal", raw: "-5" },
-                        right: { type: "Literal", raw: "-7" },
+                        left: { type: "NumberLiteral", value: "-5" },
+                        right: { type: "NumberLiteral", value: "-7" },
                         operator: { type: "Operator", operator: "-" }
                     }
                 ]
@@ -82,21 +82,21 @@ var prog = {
                                         name: "a"
                                     },
                                     right: {
-                                        type: "Literal",
-                                        raw: "50"
+                                        type: "NumberLiteral",
+                                        value: "50"
                                     }
                                 },
                                 {
-                                    type: "Literal",
-                                    raw: "100"
+                                    type: "NumberLiteral",
+                                    value: "100"
                                 },
                                 {
-                                    type: "Literal",
-                                    raw: "100"
+                                    type: "NumberLiteral",
+                                    value: "100"
                                 },
                                 {
-                                    type: "Literal",
-                                    raw: "100"
+                                    type: "NumberLiteral",
+                                    value: "100"
                                 }
                             ]
                         }
