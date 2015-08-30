@@ -140,6 +140,7 @@ function getNextNode(node, path) {
     }
 }
 
+// TODO renamed to selectable nodes
 let leafNodeTypes = [
     "NumberLiteral",
     "Identifier",
@@ -151,7 +152,8 @@ let leafNodeTypes = [
     "BinaryExpression",
     "AssignmentExpression",
     "ReturnStatement",
-    "Operator"
+    "Operator",
+    "Keyword"
 ];
 
 class NodeEditor extends Component {
@@ -197,7 +199,7 @@ class NodeEditor extends Component {
                 cursorNode
             });
 
-            if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+            if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
                 this.setState({ selectedNodes: [cursorNode] });
             } else {
                 this.setState({ selectedNodes: [] });
@@ -229,7 +231,7 @@ class NodeEditor extends Component {
                         column = cursorNode.loc.end.column;
                         line = cursorNode.loc.end.line;
                         this.setState({ cursorPosition: { column, line }, cursorNode });
-                        if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+                        if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
                             this.setState({ selectedNodes: [cursorNode] });
                         } else {
                             this.setState({ selectedNodes: [] });
@@ -249,7 +251,7 @@ class NodeEditor extends Component {
                         column = cursorNode.loc.start.column;
                         line = cursorNode.loc.start.line;
                         this.setState({ cursorPosition: { column, line }, cursorNode });
-                        if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+                        if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
                             this.setState({ selectedNodes: [cursorNode] });
                         } else {
                             this.setState({ selectedNodes: [] });
@@ -270,7 +272,7 @@ class NodeEditor extends Component {
                     column = cursorNode.loc.end.column;
                     line = cursorNode.loc.end.line;
                     this.setState({ cursorPosition: { column, line }, cursorNode });
-                    if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+                    if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
                         this.setState({ selectedNodes: [cursorNode] });
                     } else {
                         this.setState({ selectedNodes: [] });
@@ -284,7 +286,7 @@ class NodeEditor extends Component {
                     column = cursorNode.loc.start.column;
                     line = cursorNode.loc.start.line;
                     this.setState({ cursorPosition: { column, line }, cursorNode });
-                    if (["Placeholder", "Operator", "ReturnStatement"].includes(cursorNode.type)) {
+                    if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
                         this.setState({ selectedNodes: [cursorNode] });
                     } else {
                         this.setState({ selectedNodes: [] });

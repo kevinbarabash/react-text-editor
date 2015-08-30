@@ -23,9 +23,10 @@ let renderer = {
     VariableDeclaration(node, parent) {
         node.loc = {};
         node.loc.start = { line, column };
-        let result = node.kind;
+        let result = "";
+        result += render(node.kind);
         result += " ";
-        column += node.kind.length + 1;     // node.kind.length + " ".length
+        column += 1;
 
         node.declarations.forEach((decl, index) => {
             if (index > 0) {
@@ -86,12 +87,18 @@ let renderer = {
         node.loc = {};
         node.loc.start = { line, column };
 
-        let result = "for (";
-        column += 5;    // "for (".length
+        let result = "";
+        result += render(node.for);
+        result += " (";
+        column += 2;    // " (".length
 
         result += render(node.left, node);
-        result += " of ";
-        column += 4;    // " of ".length
+        column += 1;
+        // TODO have the node render include the spaces in the output
+        // it can set the start/end locations appropriately too
+        result += " " + render(node.of);
+        column += 1;
+        //column += 4;    // " of ".length
         result += render(node.right);
         result += ") ";
 
@@ -198,13 +205,15 @@ let renderer = {
     ReturnStatement(node) {
         node.loc = {};
         node.loc.start = { line, column };
-
-        column += 7;    // "return ".length
-        let arg = render(node.argument);
+        
+        let result = "";
+        result += render(node["return"]);
+        column += 1;
+        result += render(node.argument);
 
         node.loc.end = node.argument.loc.end;
 
-        return `return ${arg};`;
+        return result;
     },
     Program(node) {
         // TODO: unify this with "BlockStatement" which has the same code
@@ -275,8 +284,9 @@ let renderer = {
         node.loc = {};
         node.loc.start = { line, column };
 
-        let result = "class ";
-        column += 6;    // "class ".length
+        let result = "";
+        result += render(node["class"]);
+        column += 1;
 
         // not advancing column here is okay because ClassBody (BlockStatement)
         // resets column when it advances to the first line of the body
@@ -452,6 +462,13 @@ let renderer = {
         column += node.operator.length;
         node.loc.end = { line, column };
         return ` ${node.operator} `;
+    },
+    Keyword(node) {
+        node.loc = {};
+        node.loc.start = { line, column };
+        column += node.keyword.length;
+        node.loc.end = { line, column };
+        return ` ${node.keyword} `;
     }
 };
 

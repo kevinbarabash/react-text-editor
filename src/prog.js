@@ -14,6 +14,10 @@ var prog = {
         },
         {
             type: "ForOfStatement",
+            for: {
+                type: "Keyword",
+                keyword: "for"
+            },
             left: {
                 type: "VariableDeclaration",
                 declarations: [{
@@ -24,7 +28,14 @@ var prog = {
                     },
                     init: null
                 }],
-                kind: "let"
+                kind: {
+                    type: "Keyword",
+                    keyword: "let"
+                }
+            },
+            of: {
+                type: "Keyword",
+                keyword: "of"
             },
             right: {
                 type: "ArrayExpression",
@@ -107,6 +118,10 @@ var prog = {
         { type: "BlankStatement" },
         {
             type: "ClassDeclaration",
+            "class": {
+                type: "Keyword",
+                keyword: "class"  
+            },
             id: {
                 type: "Identifier",
                 name: "Foo"
@@ -159,6 +174,10 @@ var prog = {
                                 "body": [
                                     {
                                         type: "ReturnStatement",
+                                        "return": {
+                                            type: "Keyword",
+                                            keyword: "return"
+                                        },
                                         argument: {
                                             type: "BinaryExpression",
                                             operator: { type: "Operator", operator: "+" },

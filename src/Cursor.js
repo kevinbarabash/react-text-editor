@@ -56,4 +56,10 @@ Cursor.defaultProps = {
     visible: true
 };
 
+Cursor.propTypes = {
+    visible: React.PropTypes.bool,
+    charWidth: React.PropTypes.number,
+    charHeight: React.PropTypes.number
+};
+
 export default Cursor;

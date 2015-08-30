@@ -57,7 +57,7 @@ class ClassDeclaration extends Component {
         // TODO handle indentation of nested classes
         return <div>
             <div>
-                <span style={{ color: "#00F" }}>class</span>
+                {maybeRender(node["class"])}
                 {" "}
                 <span>{id}</span>{open}
             </div>
@@ -120,18 +120,14 @@ class Placeholder extends Component {
 class ReturnStatement extends Component {
     render() {
         let { node } = this.props;
-        let expression = maybeRender(node.argument);
-        let style = {
-            color: "#00F"
-        };
-        return <div>{this.props.indent}<span style={style}>return</span> {expression};</div>;
+        return <div>{this.props.indent}{maybeRender(node["return"])} {maybeRender(node.argument)};</div>;
     }
 }
 
 class VariableDeclaration extends Component {
     render() {
         let decl = maybeRender(this.props.node.declarations[0]);
-        let kind = this.props.node.kind;
+        let kind = maybeRender(this.props.node.kind);
         return <span>{kind} {decl}</span>;
     }
 }
@@ -198,7 +194,7 @@ class ForOfStatement extends Component {
         // TODO handle indentation
         return <div>
             <div>
-                <span style={{color:"#00F"}}>for</span> ({left} of {right}) {open}
+                {maybeRender(node.for)} ({left} {maybeRender(node.of)} {right}) {open}
             </div>
             {block}
             <div>
@@ -248,6 +244,12 @@ class Operator extends Component {
     }
 }
 
+class Keyword extends Component {
+    render() {
+        return <span style={{color:"#00F"}}>{this.props.node.keyword}</span>;
+    }
+}
+
 class Program extends Component {
     render() {
         let style = {
@@ -288,7 +290,8 @@ let components = {
     ReturnStatement,
     Placeholder,
     StringLiteral,
-    Operator
+    Operator,
+    Keyword
 };
 
 maybeRender = function(node) {
