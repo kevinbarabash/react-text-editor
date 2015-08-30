@@ -50,14 +50,17 @@ function getLeftmostLeaf(node) {
     return getLeftmostLeaf(firstNode);
 }
 
+// TODO: investigate using a function that returns an iterator and creating
+// nodes for param lists, argument lists, etc.
 function getPreviousNode(node, path) {
     let parent = path[path.length - 2];
     if (parent) {
         let ordering = orderings[parent.type];
         for (let i = ordering.length - 1; i > 0; i--) {
             let currentNode = parent[ordering[i]];
+            let previousNode = parent[ordering[i - 1]];
+
             if (currentNode === node) {
-                let previousNode = parent[ordering[i - 1]];
                 if (previousNode === null) {
                     path.pop();
                     return getPreviousNode(parent, path);
@@ -69,19 +72,15 @@ function getPreviousNode(node, path) {
                 if (idx > 0) {
                     return getRightmostLeaf(currentNode[idx - 1]);
                 } else if (idx === 0) {
-                    return getRightmostLeaf(parent[ordering[i - 1]]);
+                    return getRightmostLeaf(previousNode);
                 }
             }
         }
         let firstNode = parent[ordering[0]];
         if (Array.isArray(firstNode)) {
             let idx = firstNode.findIndex(child => child === node);
-            if (idx > 0) {
-                let previousNode = firstNode[idx - 1];
-                if (previousNode === null) {
-                    path.pop();
-                    return getPreviousNode(parent, path);
-                }
+            let previousNode = firstNode[idx - 1];
+            if (idx > 0 && previousNode) {
                 return getRightmostLeaf(previousNode);
             } else {
                 path.pop();
@@ -101,8 +100,9 @@ function getNextNode(node, path) {
         let ordering = orderings[parent.type];
         for (let i = 0; i < ordering.length - 1; i++) {
             let currentNode = parent[ordering[i]];
+            let nextNode = parent[ordering[i + 1]];
+
             if (currentNode === node) {
-                let nextNode = parent[ordering[i + 1]];
                 if (nextNode === null) {
                     path.pop();
                     return getNextNode(parent, path);
@@ -114,19 +114,16 @@ function getNextNode(node, path) {
                 if (idx < currentNode.length - 1) {
                     return getLeftmostLeaf(currentNode[idx + 1]);
                 } else if (idx === 0) {
-                    return getLeftmostLeaf(parent[ordering[i + 1]]);
+                    return getLeftmostLeaf(nextNode);
                 }
             }
         }
         let lastNode = parent[ordering[ordering.length - 1]];
         if (Array.isArray(lastNode)) {
             let idx = lastNode.findIndex(child => child === node);
-            if (idx < lastNode.length - 1) {
-                let nextNode = lastNode[idx + 1];
-                if (nextNode === null) {
-                    path.pop();
-                    return getNextNode(parent, path);
-                }
+            let nextNode = lastNode[idx + 1];
+
+            if (idx < lastNode.length - 1 && nextNode) {
                 return getLeftmostLeaf(nextNode);
             } else {
                 path.pop();
