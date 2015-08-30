@@ -250,6 +250,13 @@ class Keyword extends Component {
     }
 }
 
+class Parentheses extends Component {
+    render() {
+        let { node } = this.props;
+        return <span>({maybeRender(node.expression)})</span>;
+    }
+}
+
 class Program extends Component {
     render() {
         let style = {
@@ -258,13 +265,8 @@ class Program extends Component {
             left: 45
         };
 
-        let start = Date.now();
         let children = this.props.body.map(child => maybeRender(child));
-        let result = <div style={style}>{children}</div>;
-        let elapsed = Date.now() - start;
-        console.log(`elapsed = ${elapsed}ms`);
-
-        return result;
+        return <div style={style}>{children}</div>;
     }
 }
 
@@ -291,7 +293,8 @@ let components = {
     Placeholder,
     StringLiteral,
     Operator,
-    Keyword
+    Keyword,
+    Parentheses
 };
 
 maybeRender = function(node) {

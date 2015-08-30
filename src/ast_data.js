@@ -14,7 +14,8 @@ var orderings = {
     CallExpression: ["callee", "arguments"],
     ForOfStatement: ["for", "left", "of", "right", "body"],
     ArrayExpression: ["elements"],
-    Program: ["body"]
+    Program: ["body"],
+    Parentheses: ["expression"]
 };
 
 var leaves = [

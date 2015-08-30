@@ -192,7 +192,7 @@ class NodeEditor extends Component {
 
         if (leafNodeTypes.includes(cursorNode.type)) {
             console.log("cursorNode = %o", cursorNode);
-            console.log(`line = ${line}, column = ${column}`);
+            //console.log(`line = ${line}, column = ${column}`);
 
             this.setState({
                 cursorPosition: { line, column },
@@ -238,7 +238,6 @@ class NodeEditor extends Component {
                         }
                     }
                 }
-                console.log("left");
             } else if (e.keyCode === 39) {
                 if (relIdx < width) {
                     column++;
@@ -258,7 +257,6 @@ class NodeEditor extends Component {
                         }
                     }
                 }
-                console.log("right");
             }
         } else {
             let root = this.props.node;
@@ -307,8 +305,6 @@ class NodeEditor extends Component {
         span.style.fontSize = this.state.fontSize + 'px';
         span.style.fontFamily = 'monospace';
         var bbox = span.getBoundingClientRect();
-        console.log(`height = ${bbox.height}`);
-        console.log(`width = ${bbox.width}`);
         this.setState({ 
             charWidth: bbox.width,
             charHeight: bbox.height

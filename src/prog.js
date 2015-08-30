@@ -116,6 +116,50 @@ var prog = {
             }
         },
         { type: "BlankStatement" },
+        { 
+            type: "ExpressionStatement",
+            expression: {
+                type: "AssignmentExpression",
+                left: {
+                    type: "Identifier",
+                    name: "x"
+                },
+                operator: {
+                    type: "Operator",
+                    operator: "="
+                },
+                right: {
+                    type: "BinaryExpression",
+                    left: {
+                        type: "Parentheses",
+                        expression: {
+                            type: "BinaryExpression",
+                            left: {
+                                type: "Identifier",
+                                name: "x"
+                            },
+                            operator: {
+                                type: "Operator",
+                                operator: "+"
+                            },
+                            right: {
+                                type: "NumberLiteral",
+                                value: "1"
+                            }
+                        }
+                    },
+                    operator: {
+                        type: "Operator",
+                        operator: "/"
+                    },
+                    right: {
+                        type: "NumberLiteral",
+                        value: "2.0"
+                    }
+                }
+            }
+        },
+        { type: "BlankStatement" },
         {
             type: "ClassDeclaration",
             "class": {

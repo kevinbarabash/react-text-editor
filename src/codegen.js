@@ -49,9 +49,7 @@ let renderer = {
             node.loc = {};
             let result = render(node.id);
             node.loc.start = node.id.loc.start;
-            column++;
             result += render(node.operator);
-            column++;
             result += render(node.init);
             node.loc.end = node.init.loc.end;
             return result;
@@ -190,9 +188,7 @@ let renderer = {
     },
     AssignmentExpression(node) {
         let left = render(node.left);
-        column++;
         let operator = render(node.operator);
-        column++;
         let right = render(node.right);
 
         node.loc = {
@@ -250,9 +246,7 @@ let renderer = {
     },
     BinaryExpression(node) {
         let left = render(node.left);
-        column++;
         let operator = render(node.operator);
-        column++;
         let right = render(node.right);
 
         node.loc = {
@@ -458,9 +452,11 @@ let renderer = {
     },
     Operator(node) {
         node.loc = {};
+        column++;
         node.loc.start = { line, column };
         column += node.operator.length;
         node.loc.end = { line, column };
+        column++;
         return ` ${node.operator} `;
     },
     Keyword(node) {
@@ -468,7 +464,7 @@ let renderer = {
         node.loc.start = { line, column };
         column += node.keyword.length;
         node.loc.end = { line, column };
-        return ` ${node.keyword} `;
+        return `${node.keyword}`;
     }
 };
 
