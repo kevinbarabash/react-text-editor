@@ -27,7 +27,7 @@ class Cursor extends Component {
     }
 
     componentWillUpdate(nextProps, nextState) {
-        if (nextProps.column !== this.props.column && nextProps.line !== this.props.line) {
+        if (nextProps.column !== this.props.column || nextProps.line !== this.props.line) {
             clearInterval(this.interval);
             this.startBlinking();
             this.setState({ opacity: 1 });
