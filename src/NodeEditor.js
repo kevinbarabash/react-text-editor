@@ -60,84 +60,78 @@ function getProp(node, i) {
 
 function getPreviousNode(node, path) {
     let parent = path[path.length - 2];
-    if (parent) {
-        let ordering = orderings[parent.type];
-        for (let i = ordering.length - 1; i > 0; i--) {
-            let currentProp = getProp(parent, i);
-            let previousProp = getProp(parent, i - 1);
+    if (!parent) {
+        throw "no previous node";
+    }
+    let ordering = orderings[parent.type];
+    for (let i = ordering.length - 1; i > 0; i--) {
+        let currentProp = getProp(parent, i);
+        let previousProp = getProp(parent, i - 1);
 
-            if (currentProp === node) {
-                if (previousProp === null) {
-                    path.pop();
-                    return getPreviousNode(parent, path);
-                }
-                return getRightmostLeaf(previousProp);
-            }
-            if (Array.isArray(currentProp)) {
-                let idx = currentProp.findIndex(child => child === node);
-                if (idx > 0) {
-                    return getRightmostLeaf(currentProp[idx - 1]);
-                } else if (idx === 0) {
-                    return getRightmostLeaf(previousProp);
-                }
-            }
-        }
-        let firstProp = getProp(parent, 0);
-        if (Array.isArray(firstProp)) {
-            let idx = firstProp.findIndex(child => child === node);
-            if (idx > 0) {
-                return getRightmostLeaf(firstProp[idx - 1]);
-            } else {
+        if (currentProp === node) {
+            if (previousProp === null) {
                 path.pop();
                 return getPreviousNode(parent, path);
             }
+            return getRightmostLeaf(previousProp);
         }
-        if (firstProp === node) {
-            path.pop();
-            return getPreviousNode(parent, path);
+        if (Array.isArray(currentProp)) {
+            let idx = currentProp.findIndex(child => child === node);
+            if (idx > 0) {
+                return getRightmostLeaf(currentProp[idx - 1]);
+            } else if (idx === 0) {
+                return getRightmostLeaf(previousProp);
+            }
         }
     }
+    let firstProp = getProp(parent, 0);
+    if (Array.isArray(firstProp)) {
+        let idx = firstProp.findIndex(child => child === node);
+        if (idx > 0) {
+            return getRightmostLeaf(firstProp[idx - 1]);
+        }
+    }
+    // fallback
+    path.pop();
+    return getPreviousNode(parent, path);
 }
 
 function getNextNode(node, path) {
     let parent = path[path.length - 2];
-    if (parent) {
-        let ordering = orderings[parent.type];
-        for (let i = 0; i < ordering.length - 1; i++) {
-            let currentProp = getProp(parent, i);
-            let nextProp = getProp(parent, i + 1);
+    if (!parent) {
+        throw "no next node";
+    }
+    let ordering = orderings[parent.type];
+    for (let i = 0; i < ordering.length - 1; i++) {
+        let currentProp = getProp(parent, i);
+        let nextProp = getProp(parent, i + 1);
 
-            if (currentProp === node) {
-                if (nextProp === null) {
-                    path.pop();
-                    return getNextNode(parent, path);
-                }
-                return getLeftmostLeaf(nextProp);
-            }
-            if (Array.isArray(currentProp)) {
-                let idx = currentProp.findIndex(child => child === node);
-                if (idx < currentProp.length - 1) {
-                    return getLeftmostLeaf(currentProp[idx + 1]);
-                } else if (idx === 0) {
-                    return getLeftmostLeaf(nextProp);
-                }
-            }
-        }
-        let lastProp = parent[ordering[ordering.length - 1]];
-        if (Array.isArray(lastProp)) {
-            let idx = lastProp.findIndex(child => child === node);
-            if (idx < lastProp.length - 1) {
-                return getLeftmostLeaf(lastProp[idx + 1]);
-            } else {
+        if (currentProp === node) {
+            if (nextProp === null) {
                 path.pop();
                 return getNextNode(parent, path);
             }
+            return getLeftmostLeaf(nextProp);
         }
-        if (lastProp === node) {
-            path.pop();
-            return getNextNode(parent, path);
+        if (Array.isArray(currentProp)) {
+            let idx = currentProp.findIndex(child => child === node);
+            if (idx < currentProp.length - 1) {
+                return getLeftmostLeaf(currentProp[idx + 1]);
+            } else if (idx === 0) {
+                return getLeftmostLeaf(nextProp);
+            }
         }
     }
+    let lastProp = parent[ordering[ordering.length - 1]];
+    if (Array.isArray(lastProp)) {
+        let idx = lastProp.findIndex(child => child === node);
+        if (idx < lastProp.length - 1) {
+            return getLeftmostLeaf(lastProp[idx + 1]);
+        }
+    }
+    // fallback
+    path.pop();
+    return getNextNode(parent, path);
 }
 
 // TODO renamed to selectable nodes
