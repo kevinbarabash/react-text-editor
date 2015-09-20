@@ -12,127 +12,7 @@ import Gutter from './gutter';
 
 import { leaves, orderings } from './ast_data';
 
-// TODO: handle empty arguments, elements, etc.
-
-function getRightmostLeaf(node) {
-    if (Array.isArray(node)) {
-        return getRightmostLeaf(node[node.length - 1]);
-    }
-    if (leaves.includes(node.type)) {
-        return node;
-    } 
-    let ordering = orderings[node.type];
-    let lastNode = null;
-    for (let i = ordering.length - 1; i > -1; i--) {
-        lastNode = node[ordering[i]];
-        if (lastNode) {
-            break;
-        }
-    }
-    // TODO: handle case when lastNode is still null
-    return getRightmostLeaf(lastNode);
-}
-
-function getLeftmostLeaf(node) {
-    if (Array.isArray(node)) {
-        return getLeftmostLeaf(node[0]);
-    }
-    if (leaves.includes(node.type)) {
-        return node;
-    }
-    let ordering = orderings[node.type];
-    let firstNode = null;
-    for (let i = 0; i < ordering.length; i++) {
-        firstNode = node[ordering[i]];
-        if (firstNode) {
-            break;
-        }
-    }
-    // TODO: handle case when firstNode is still null
-    return getLeftmostLeaf(firstNode);
-}
-
-// get ordered prop
-function getProp(node, i) {
-    let ordering = orderings[node.type];
-    return node[ordering[i]];
-}
-
-function getPreviousNode(node, path) {
-    let parent = path[path.length - 2];
-    if (!parent) {
-        throw "no previous node";
-    }
-    let ordering = orderings[parent.type];
-    for (let i = ordering.length - 1; i > 0; i--) {
-        let currentProp = getProp(parent, i);
-        let previousProp = getProp(parent, i - 1);
-
-        if (currentProp === node) {
-            if (previousProp === null) {
-                path.pop();
-                return getPreviousNode(parent, path);
-            }
-            return getRightmostLeaf(previousProp);
-        }
-        if (Array.isArray(currentProp)) {
-            let idx = currentProp.findIndex(child => child === node);
-            if (idx > 0) {
-                return getRightmostLeaf(currentProp[idx - 1]);
-            } else if (idx === 0) {
-                return getRightmostLeaf(previousProp);
-            }
-        }
-    }
-    let firstProp = getProp(parent, 0);
-    if (Array.isArray(firstProp)) {
-        let idx = firstProp.findIndex(child => child === node);
-        if (idx > 0) {
-            return getRightmostLeaf(firstProp[idx - 1]);
-        }
-    }
-    // fallback
-    path.pop();
-    return getPreviousNode(parent, path);
-}
-
-function getNextNode(node, path) {
-    let parent = path[path.length - 2];
-    if (!parent) {
-        throw "no next node";
-    }
-    let ordering = orderings[parent.type];
-    for (let i = 0; i < ordering.length - 1; i++) {
-        let currentProp = getProp(parent, i);
-        let nextProp = getProp(parent, i + 1);
-
-        if (currentProp === node) {
-            if (nextProp === null) {
-                path.pop();
-                return getNextNode(parent, path);
-            }
-            return getLeftmostLeaf(nextProp);
-        }
-        if (Array.isArray(currentProp)) {
-            let idx = currentProp.findIndex(child => child === node);
-            if (idx < currentProp.length - 1) {
-                return getLeftmostLeaf(currentProp[idx + 1]);
-            } else if (idx === 0) {
-                return getLeftmostLeaf(nextProp);
-            }
-        }
-    }
-    let lastProp = parent[ordering[ordering.length - 1]];
-    if (Array.isArray(lastProp)) {
-        let idx = lastProp.findIndex(child => child === node);
-        if (idx < lastProp.length - 1) {
-            return getLeftmostLeaf(lastProp[idx + 1]);
-        }
-    }
-    // fallback
-    path.pop();
-    return getNextNode(parent, path);
-}
+import HeadlessEditor from './HeadlessEditor';
 
 // TODO renamed to selectable nodes
 let leafNodeTypes = [
@@ -166,6 +46,9 @@ class NodeEditor extends Component {
             selectedNodes: [],
             cursorNode: null
         };
+        
+        this.headlessEditor = new HeadlessEditor(props.node);
+
         // TODO: store scrollTop as part of state to maintain scrollTop position
     }
 
@@ -198,6 +81,9 @@ class NodeEditor extends Component {
             } else {
                 this.setState({ selectedNodes: [] });
             }
+
+            this.headlessEditor.cursorNode = cursorNode;
+            this.headlessEditor.cursorPosition = { line, column };
         }
     }
     
@@ -215,40 +101,17 @@ class NodeEditor extends Component {
     }
 
     handleKeyDown(e) {
-        let node = this.state.cursorNode;
-        let column = this.state.cursorPosition.column;
-        let line = this.state.cursorPosition.line;
-
-        let root = this.props.node;
-        let path = findNodePath(root, line, column);
-        
-        if (["Identifier", "NumberLiteral", "StringLiteral"].includes(node.type)) {
-            let relIdx = column - node.loc.start.column;
-            let width = node.loc.end.column - node.loc.start.column;
-
-            if (e.keyCode === 37) {
-                if (relIdx > 0) {
-                    column--;
-                    this.setState({ cursorPosition: { column, line }});
-                } else {
-                    this.setCursorNode(getPreviousNode(node, path), "end");
-                }
-            } else if (e.keyCode === 39) {
-                if (relIdx < width) {
-                    column++;
-                    this.setState({ cursorPosition: { column, line }});
-                } else {
-                    this.setCursorNode(getNextNode(node, path), "start");
-                }
-            }
-        } else {
-            if (e.keyCode === 37) {
-                this.setCursorNode(getPreviousNode(node, path), "end");
-            } else if (e.keyCode === 39) {
-                this.setCursorNode(getNextNode(node, path), "start");
-            }
+        if (e.keyCode === 37) {
+            // TODO group cursorNode and cursorPosition together into a Cursor object
+            // which is separate from a CursorView
+            this.headlessEditor.back((cursorNode, cursorPosition, selectedNodes) => {
+                this.setState({ cursorNode, cursorPosition, selectedNodes });
+            });
+        } else if (e.keyCode === 39) {
+            this.headlessEditor.forward((cursorNode, cursorPosition, selectedNodes) => {
+                this.setState({ cursorNode, cursorPosition, selectedNodes });
+            });
         }
-
     }
 
     componentWillMount() {
