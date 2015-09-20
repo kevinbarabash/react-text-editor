@@ -293,6 +293,7 @@ class NodeEditor extends Component {
     }
 
     componentWillMount() {
+        // TODO extract this so that we can this this component
         // add location information to the AST
         renderAST(this.props.node);
 
