@@ -1,3 +1,5 @@
+"use strict";
+
 import React, { Component } from 'react'
 
 import { renderAST } from './codegen';
@@ -50,44 +52,47 @@ function getLeftmostLeaf(node) {
     return getLeftmostLeaf(firstNode);
 }
 
-// TODO: investigate using a function that returns an iterator and creating
-// nodes for param lists, argument lists, etc.
+// get ordered prop
+function getProp(node, i) {
+    let ordering = orderings[node.type];
+    return node[ordering[i]];
+}
+
 function getPreviousNode(node, path) {
     let parent = path[path.length - 2];
     if (parent) {
         let ordering = orderings[parent.type];
         for (let i = ordering.length - 1; i > 0; i--) {
-            let currentNode = parent[ordering[i]];
-            let previousNode = parent[ordering[i - 1]];
+            let currentProp = getProp(parent, i);
+            let previousProp = getProp(parent, i - 1);
 
-            if (currentNode === node) {
-                if (previousNode === null) {
+            if (currentProp === node) {
+                if (previousProp === null) {
                     path.pop();
                     return getPreviousNode(parent, path);
                 }
-                return getRightmostLeaf(previousNode);
+                return getRightmostLeaf(previousProp);
             }
-            if (Array.isArray(currentNode)) {
-                let idx = currentNode.findIndex(child => child === node);
+            if (Array.isArray(currentProp)) {
+                let idx = currentProp.findIndex(child => child === node);
                 if (idx > 0) {
-                    return getRightmostLeaf(currentNode[idx - 1]);
+                    return getRightmostLeaf(currentProp[idx - 1]);
                 } else if (idx === 0) {
-                    return getRightmostLeaf(previousNode);
+                    return getRightmostLeaf(previousProp);
                 }
             }
         }
-        let firstNode = parent[ordering[0]];
-        if (Array.isArray(firstNode)) {
-            let idx = firstNode.findIndex(child => child === node);
-            let previousNode = firstNode[idx - 1];
-            if (idx > 0 && previousNode) {
-                return getRightmostLeaf(previousNode);
+        let firstProp = getProp(parent, 0);
+        if (Array.isArray(firstProp)) {
+            let idx = firstProp.findIndex(child => child === node);
+            if (idx > 0) {
+                return getRightmostLeaf(firstProp[idx - 1]);
             } else {
                 path.pop();
                 return getPreviousNode(parent, path);
             }
         }
-        if (firstNode === node) {
+        if (firstProp === node) {
             path.pop();
             return getPreviousNode(parent, path);
         }
@@ -99,38 +104,36 @@ function getNextNode(node, path) {
     if (parent) {
         let ordering = orderings[parent.type];
         for (let i = 0; i < ordering.length - 1; i++) {
-            let currentNode = parent[ordering[i]];
-            let nextNode = parent[ordering[i + 1]];
+            let currentProp = getProp(parent, i);
+            let nextProp = getProp(parent, i + 1);
 
-            if (currentNode === node) {
-                if (nextNode === null) {
+            if (currentProp === node) {
+                if (nextProp === null) {
                     path.pop();
                     return getNextNode(parent, path);
                 }
-                return getLeftmostLeaf(nextNode);
+                return getLeftmostLeaf(nextProp);
             }
-            if (Array.isArray(currentNode)) {
-                let idx = currentNode.findIndex(child => child === node);
-                if (idx < currentNode.length - 1) {
-                    return getLeftmostLeaf(currentNode[idx + 1]);
+            if (Array.isArray(currentProp)) {
+                let idx = currentProp.findIndex(child => child === node);
+                if (idx < currentProp.length - 1) {
+                    return getLeftmostLeaf(currentProp[idx + 1]);
                 } else if (idx === 0) {
-                    return getLeftmostLeaf(nextNode);
+                    return getLeftmostLeaf(nextProp);
                 }
             }
         }
-        let lastNode = parent[ordering[ordering.length - 1]];
-        if (Array.isArray(lastNode)) {
-            let idx = lastNode.findIndex(child => child === node);
-            let nextNode = lastNode[idx + 1];
-
-            if (idx < lastNode.length - 1 && nextNode) {
-                return getLeftmostLeaf(nextNode);
+        let lastProp = parent[ordering[ordering.length - 1]];
+        if (Array.isArray(lastProp)) {
+            let idx = lastProp.findIndex(child => child === node);
+            if (idx < lastProp.length - 1) {
+                return getLeftmostLeaf(lastProp[idx + 1]);
             } else {
                 path.pop();
                 return getNextNode(parent, path);
             }
         }
-        if (lastNode === node) {
+        if (lastProp === node) {
             path.pop();
             return getNextNode(parent, path);
         }
@@ -203,90 +206,52 @@ class NodeEditor extends Component {
             }
         }
     }
+    
+    setCursorNode(cursorNode, locKey) {
+        if (cursorNode) {
+            let column = cursorNode.loc[locKey].column;
+            let line = cursorNode.loc[locKey].line;
+            this.setState({ cursorPosition: { column, line }, cursorNode });
+            if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
+                this.setState({ selectedNodes: [cursorNode] });
+            } else {
+                this.setState({ selectedNodes: [] });
+            }
+        }
+    }
 
     handleKeyDown(e) {
         let node = this.state.cursorNode;
         let column = this.state.cursorPosition.column;
         let line = this.state.cursorPosition.line;
+
+        let root = this.props.node;
+        let path = findNodePath(root, line, column);
         
         if (["Identifier", "NumberLiteral", "StringLiteral"].includes(node.type)) {
             let relIdx = column - node.loc.start.column;
             let width = node.loc.end.column - node.loc.start.column;
 
-            let root = this.props.node;
-            let path = findNodePath(root, line, column);
-            
             if (e.keyCode === 37) {
                 if (relIdx > 0) {
                     column--;
                     this.setState({ cursorPosition: { column, line }});
                 } else {
-                    let previousNode = getPreviousNode(node, path);
-
-                    if (previousNode) {
-                        let cursorNode = previousNode;
-                        column = cursorNode.loc.end.column;
-                        line = cursorNode.loc.end.line;
-                        this.setState({ cursorPosition: { column, line }, cursorNode });
-                        if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
-                            this.setState({ selectedNodes: [cursorNode] });
-                        } else {
-                            this.setState({ selectedNodes: [] });
-                        }
-                    }
+                    this.setCursorNode(getPreviousNode(node, path), "end");
                 }
             } else if (e.keyCode === 39) {
                 if (relIdx < width) {
                     column++;
                     this.setState({ cursorPosition: { column, line }});
                 } else {
-                    let nextNode = getNextNode(node, path);
-
-                    if (nextNode) {
-                        let cursorNode = nextNode;
-                        column = cursorNode.loc.start.column;
-                        line = cursorNode.loc.start.line;
-                        this.setState({ cursorPosition: { column, line }, cursorNode });
-                        if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
-                            this.setState({ selectedNodes: [cursorNode] });
-                        } else {
-                            this.setState({ selectedNodes: [] });
-                        }
-                    }
+                    this.setCursorNode(getNextNode(node, path), "start");
                 }
             }
         } else {
-            let root = this.props.node;
-            let path = findNodePath(root, line, column);
-            
             if (e.keyCode === 37) {
-                let previousNode = getPreviousNode(node, path);
-                
-                if (previousNode) {
-                    let cursorNode = previousNode;
-                    column = cursorNode.loc.end.column;
-                    line = cursorNode.loc.end.line;
-                    this.setState({ cursorPosition: { column, line }, cursorNode });
-                    if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
-                        this.setState({ selectedNodes: [cursorNode] });
-                    } else {
-                        this.setState({ selectedNodes: [] });
-                    }
-                }
+                this.setCursorNode(getPreviousNode(node, path), "end");
             } else if (e.keyCode === 39) {
-                let nextNode = getNextNode(node, path);
-
-                if (nextNode) {
-                    let cursorNode = nextNode;
-                    column = cursorNode.loc.start.column;
-                    line = cursorNode.loc.start.line;
-                    this.setState({ cursorPosition: { column, line }, cursorNode });
-                    if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
-                        this.setState({ selectedNodes: [cursorNode] });
-                    } else {
-                        this.setState({ selectedNodes: [] });
-                    }
-                }
+                this.setCursorNode(getNextNode(node, path), "start");
             }
         }
 
