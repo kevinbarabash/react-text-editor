@@ -33,8 +33,11 @@ let leafNodeTypes = [
 class NodeEditor extends Component {
     constructor(props) {
         super(props);
+        
         this.handleClick = this.handleClick.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
+        this.handleKeyPress = this.handleKeyPress.bind(this);
+        
         this.state = {
             fontSize: 18,
             charWidth: 0,
@@ -111,7 +114,17 @@ class NodeEditor extends Component {
             this.headlessEditor.forward((cursorNode, cursorPosition, selectedNodes) => {
                 this.setState({ cursorNode, cursorPosition, selectedNodes });
             });
+        } else if (e.keyCode === 8) {
+            e.preventDefault();
         }
+    }
+    
+    handleKeyPress(e) {
+        let char = String.fromCharCode(e.charCode);
+        console.log(char);
+        this.headlessEditor.insert(char, (cursorNode, cursorPosition, selectedNodes) => {
+            this.setState({ cursorNode, cursorPosition, selectedNodes }); 
+        });
     }
 
     componentWillMount() {
@@ -155,6 +168,7 @@ class NodeEditor extends Component {
         return <div style={style}
                     onClick={this.handleClick}
                     onKeyDown={this.handleKeyDown}
+                    onKeyPress={this.handleKeyPress}
                     tabIndex={0}>
             {selections}
             <Cursor {...this.state.cursorPosition}
@@ -163,7 +177,7 @@ class NodeEditor extends Component {
                 charHeight={charHeight}
             />
             <Gutter count={node.loc.end.line} />
-            <Program {...node} />
+            <Program node={node} />
         </div>;
     }
 }

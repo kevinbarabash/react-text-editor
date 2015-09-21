@@ -3,6 +3,8 @@
 import { leaves, orderings } from './ast_data';
 import { findNode, findNodePath } from './node_utils';
 
+import { renderAST } from './codegen';
+
 // TODO: handle empty arguments, elements, etc.
 
 function getRightmostLeaf(node) {
@@ -146,6 +148,13 @@ class HeadlessEditor {
             }
         }
     }
+    
+    getRelIdx() {
+        let node = this.cursorNode;
+        let { line, column } = this.cursorPosition;
+        
+        return column - node.loc.start.column;
+    }
 
     forward(callback) {
         let node = this.cursorNode;
@@ -153,7 +162,7 @@ class HeadlessEditor {
         let path = findNodePath(this.root, line, column);
 
         if (["Identifier", "NumberLiteral", "StringLiteral"].includes(node.type)) {
-            let relIdx = column - node.loc.start.column;
+            let relIdx = this.getRelIdx();
             let width = node.loc.end.column - node.loc.start.column;
        
             if (relIdx < width) {
@@ -176,7 +185,7 @@ class HeadlessEditor {
         let path = findNodePath(this.root, line, column);
 
         if (["Identifier", "NumberLiteral", "StringLiteral"].includes(node.type)) {
-            let relIdx = column - node.loc.start.column;
+            let relIdx = this.getRelIdx();
 
             if (relIdx > 0) {
                 this.cursorPosition.column = column - 1;
@@ -192,12 +201,68 @@ class HeadlessEditor {
         }
     }
     
-    backspace() {
+    backspace(callback) {
         
     }
     
-    character() {
+    insert(char, callback) {
+        let node = this.cursorNode;
+        let relIdx = this.getRelIdx();
         
+        console.log(node.component);
+        
+        if (node.type === "NumberLiteral") {
+            if (/[0-9\.]/.test(char)) {
+                let value = node.value;
+                if (char === "." && /[\.]/.test(value)) {
+                    return;
+                }
+                value = value.substring(0, relIdx) + char + value.substring(relIdx);
+                node.value = value;
+                node.component.forceUpdate();
+                this.cursorPosition.column += 1;
+                renderAST(this.root);
+            } else {
+                return;
+            }
+        } else if (node.type === "StringLiteral") {
+            let value = node.value;
+            value = value.substring(0, relIdx - 1) + char + value.substring(relIdx - 1);
+            node.value = value;
+            node.component.forceUpdate();
+            this.cursorPosition.column += 1;
+            renderAST(this.root);
+
+        } else if (node.type === "Identifier") {
+            if (/[a-zA-Z0-9]/.test(char)) {
+                let name = node.name;
+                name = name.substring(0, relIdx) + char + name.substring(relIdx);
+                node.name = name;
+                node.component.forceUpdate();
+                this.cursorPosition.column += 1;
+                renderAST(this.root);
+            } else {
+                return;
+            }
+        } else if (node.type === "Placeholder") {
+            // TODO: determine if there are any restrictions on this placeholder
+
+            // TODO: actually create a new node and replace the placeholder
+            if (/[0-9\.]/.test(char)) {
+                node.type = "NumberLiteral";
+                node.value = char;
+            } else if (/[a-zA-Z]/.test(char)) {
+                node.type = "Identifier";
+                node.name = char;
+            } else if (char === '"') {
+                node.type = "StringLiteral";
+                node.value = "";
+            }
+        }
+        
+        if (callback) {
+            callback(this.cursorNode, this.cursorPosition, this.selectedNodes);
+        }
     }
 }
 
