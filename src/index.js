@@ -1,4 +1,9 @@
 import React from 'react';
-import App from './App';
+import { render } from 'react-dom';
+import { Provider } from 'react-redux';
+import NodeEditor from './NodeEditor';
+import store from './store';
 
-React.render(<App />, document.getElementById('root'));
+render(<Provider store={store}>
+    <NodeEditor />
+</Provider>, document.getElementById('root'));

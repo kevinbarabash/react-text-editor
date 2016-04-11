@@ -1,6 +1,6 @@
-"use strict";
-
-import React, { Component } from 'react'
+import React, { Component } from 'react';
+import ReactDOM from 'react-dom';
+import { connect } from 'react-redux';
 
 import { renderAST } from './codegen';
 import { findNode, findNodePath } from './node_utils';
@@ -33,11 +33,11 @@ let leafNodeTypes = [
 class NodeEditor extends Component {
     constructor(props) {
         super(props);
-        
+
         this.handleClick = this.handleClick.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
-        
+
         this.state = {
             fontSize: 18,
             charWidth: 0,
@@ -49,7 +49,7 @@ class NodeEditor extends Component {
             selectedNodes: [],
             cursorNode: null
         };
-        
+
         this.headlessEditor = new HeadlessEditor(props.node);
 
         // TODO: store scrollTop as part of state to maintain scrollTop position
@@ -58,7 +58,7 @@ class NodeEditor extends Component {
     handleClick(e) {
         e.preventDefault();
 
-        let elem = React.findDOMNode(this);
+        let elem = ReactDOM.findDOMNode(this);
 
         // TODO: measures this on componentDidMount or when the font size changes
         let { charWidth, charHeight } = this.state;
@@ -66,7 +66,7 @@ class NodeEditor extends Component {
 
         let gutterWidth = 45;
         let column = Math.round((e.pageX - elem.offsetLeft - gutterWidth) / charWidth);
-        
+
         let { cursorNode } = findNode(this.props.node, line, column);
         // TODO: check if it's a leaf node
 
@@ -89,7 +89,7 @@ class NodeEditor extends Component {
             this.headlessEditor.cursorPosition = { line, column };
         }
     }
-    
+
     setCursorNode(cursorNode, locKey) {
         if (cursorNode) {
             let column = cursorNode.loc[locKey].column;
@@ -118,12 +118,12 @@ class NodeEditor extends Component {
             e.preventDefault();
         }
     }
-    
+
     handleKeyPress(e) {
         let char = String.fromCharCode(e.charCode);
         console.log(char);
         this.headlessEditor.insert(char, (cursorNode, cursorPosition, selectedNodes) => {
-            this.setState({ cursorNode, cursorPosition, selectedNodes }); 
+            this.setState({ cursorNode, cursorPosition, selectedNodes });
         });
     }
 
@@ -138,7 +138,7 @@ class NodeEditor extends Component {
         span.style.fontSize = this.state.fontSize + 'px';
         span.style.fontFamily = 'monospace';
         var bbox = span.getBoundingClientRect();
-        this.setState({ 
+        this.setState({
             charWidth: bbox.width,
             charHeight: bbox.height
         });
@@ -186,4 +186,6 @@ NodeEditor.propTypes = {
     lines: React.PropTypes.arrayOf(React.PropTypes.string)
 };
 
-export default NodeEditor;
+const ConnectedNodeEditor = connect(state => state)(NodeEditor);
+
+export default ConnectedNodeEditor;

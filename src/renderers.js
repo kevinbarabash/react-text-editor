@@ -77,8 +77,7 @@ class ClassDeclaration extends ASTNode {
 class ClassBody extends ASTNode {
     render() {
         let defs = this.props.node.body.map(def => {
-            let result = maybeRender(def);
-            result.props.indent = "    ";
+            let result = maybeRender(def, { indent: "    " });
             return result;
         });
         return <div>{defs}</div>
@@ -89,9 +88,7 @@ class MethodDefinition extends ASTNode {
     render() {
         let { node } = this.props;
         let key = maybeRender(node.key);
-        let value = maybeRender(node.value);
-        value.props.method = true;
-        value.props.indent = this.props.indent;
+        let value = maybeRender(node.value, { method: true, indent: this.props.indent });
         return <div>{this.props.indent}{key}{value}</div>;
     }
 }
@@ -100,8 +97,7 @@ class FunctionExpression extends ASTNode {
     render() {
         let open = "{";
         let close = this.props.indent + "}";
-        let body = maybeRender(this.props.node.body);
-        body.props.indent = this.props.indent + "    ";
+        let body = maybeRender(this.props.node.body, { indent: this.props.indent + "    " });
 
         let { node } = this.props;
         let params = [];
@@ -114,6 +110,8 @@ class FunctionExpression extends ASTNode {
 
         if (this.props.method) {
             return <span>({params}) {open}<div>{body}</div>{close}</span>;
+        } else {
+            return <span>not a method</span>
         }
     }
 }
@@ -150,8 +148,7 @@ class ExpressionStatement extends ASTNode {
 class BlockStatement extends ASTNode {
     render() {
         let children = this.props.node.body.map(child => {
-            let result = maybeRender(child);
-            result.props.indent = this.props.indent;
+            let result = maybeRender(child, { indent: this.props.indent });
             return result;
         });
         return <div style={this.props.style}>{children}</div>;
@@ -193,8 +190,7 @@ class ForOfStatement extends ASTNode {
         let { node } = this.props;
         let left = maybeRender(node.left);
         let right = maybeRender(node.right);
-        let block = maybeRender(node.body);
-        block.props.indent = "    ";
+        let block = maybeRender(node.body, { indent: "    " });
         let open = "{";
         let close = "}";
 
@@ -271,7 +267,7 @@ class Program extends ASTNode {
             top: 0,
             left: 45
         };
-        
+
         let { node } = this.props;
 
         let children = node.body.map(child => maybeRender(child));
@@ -306,9 +302,9 @@ let components = {
     Parentheses
 };
 
-maybeRender = function(node) {
+maybeRender = function(node, props) {
     if (components[node.type]) {
-        return React.createElement(components[node.type], { node });
+        return React.createElement(components[node.type], { node: { ...node }, ...props });
     } else {
         return <span>{node.type}</span>;
     }

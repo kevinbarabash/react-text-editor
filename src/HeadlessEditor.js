@@ -1,5 +1,3 @@
-"use strict";
-
 import { leaves, orderings } from './ast_data';
 import { findNode, findNodePath } from './node_utils';
 
@@ -148,11 +146,11 @@ class HeadlessEditor {
             }
         }
     }
-    
+
     getRelIdx() {
         let node = this.cursorNode;
         let { line, column } = this.cursorPosition;
-        
+
         return column - node.loc.start.column;
     }
 
@@ -164,7 +162,7 @@ class HeadlessEditor {
         if (["Identifier", "NumberLiteral", "StringLiteral"].includes(node.type)) {
             let relIdx = this.getRelIdx();
             let width = node.loc.end.column - node.loc.start.column;
-       
+
             if (relIdx < width) {
                 this.cursorPosition.column = column + 1;
             } else {
@@ -173,12 +171,12 @@ class HeadlessEditor {
         } else {
             this.update(getNextNode(node, path), "start");
         }
-        
+
         if (callback) {
             callback(this.cursorNode, this.cursorPosition, this.selectedNodes);
         }
     }
-    
+
     back(callback) {
         let node = this.cursorNode;
         let { line, column } = this.cursorPosition;
@@ -191,26 +189,26 @@ class HeadlessEditor {
                 this.cursorPosition.column = column - 1;
             } else {
                 this.update(getPreviousNode(node, path), "end");
-            } 
+            }
         } else {
             this.update(getPreviousNode(node, path), "end");
         }
-        
+
         if (callback) {
             callback(this.cursorNode, this.cursorPosition, this.selectedNodes);
         }
     }
-    
+
     backspace(callback) {
-        
+
     }
-    
+
     insert(char, callback) {
         let node = this.cursorNode;
         let relIdx = this.getRelIdx();
-        
+
         console.log(node.component);
-        
+
         if (node.type === "NumberLiteral") {
             if (/[0-9\.]/.test(char)) {
                 let value = node.value;
@@ -259,7 +257,7 @@ class HeadlessEditor {
                 node.value = "";
             }
         }
-        
+
         if (callback) {
             callback(this.cursorNode, this.cursorPosition, this.selectedNodes);
         }
