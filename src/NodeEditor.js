@@ -130,7 +130,7 @@ class NodeEditor extends Component {
     componentWillMount() {
         // TODO extract this so that we can this this component
         // add location information to the AST
-        renderAST(this.props.node);
+        // renderAST(this.props.node);
 
         var span = document.createElement('span');
         document.body.appendChild(span);
@@ -164,6 +164,8 @@ class NodeEditor extends Component {
 
         let { node } = this.props;
 
+        // <Gutter count={node.loc.end.line} />
+
         // TODO use the delegate pattern to determine cursor visibility
         return <div style={style}
                     onClick={this.handleClick}
@@ -176,7 +178,6 @@ class NodeEditor extends Component {
                 charWidth={charWidth}
                 charHeight={charHeight}
             />
-            <Gutter count={node.loc.end.line} />
             <Program node={node} />
         </div>;
     }
@@ -186,6 +187,6 @@ NodeEditor.propTypes = {
     lines: React.PropTypes.arrayOf(React.PropTypes.string)
 };
 
-const ConnectedNodeEditor = connect(state => state)(NodeEditor);
+// const ConnectedNodeEditor = connect(state => state)(NodeEditor);
 
-export default ConnectedNodeEditor;
+export default NodeEditor;

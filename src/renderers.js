@@ -1,21 +1,16 @@
 import React, { Component } from 'react';
 
+import store from './store';
+
 let maybeRender;
 
-class ASTNode extends Component {
-    constructor(props) {
-        super(props);
-        props.node.component = this;
-    }
-}
-
-class Identifier extends ASTNode {
+class Identifier extends Component {
     render() {
         return <span>{this.props.node.name}</span>;
     }
 }
 
-class VariableDeclarator extends ASTNode {
+class VariableDeclarator extends Component {
     render() {
         let { id, init } = this.props.node;
         if (init) {
@@ -26,7 +21,7 @@ class VariableDeclarator extends ASTNode {
     }
 }
 
-class LineComment extends ASTNode {
+class LineComment extends Component {
     render() {
         let style = {
             color: "rgb(76, 136, 107)"
@@ -35,7 +30,7 @@ class LineComment extends ASTNode {
     };
 }
 
-class BlockComment extends ASTNode {
+class BlockComment extends Component {
     render() {
         let style = {
             color: "rgb(76, 136, 107)"
@@ -52,7 +47,7 @@ class BlockComment extends ASTNode {
     }
 }
 
-class ClassDeclaration extends ASTNode {
+class ClassDeclaration extends Component {
     // TODO handle 'extends' syntax
     render() {
         let { node } = this.props;
@@ -74,9 +69,9 @@ class ClassDeclaration extends ASTNode {
     }
 }
 
-class ClassBody extends ASTNode {
+class ClassBody extends Component {
     render() {
-        let defs = this.props.node.body.map(def => {
+        let defs = state[this.props.node.body.id].map(def => {
             let result = maybeRender(def, { indent: "    " });
             return result;
         });
@@ -84,7 +79,7 @@ class ClassBody extends ASTNode {
     }
 }
 
-class MethodDefinition extends ASTNode {
+class MethodDefinition extends Component {
     render() {
         let { node } = this.props;
         let key = maybeRender(node.key);
@@ -93,7 +88,7 @@ class MethodDefinition extends ASTNode {
     }
 }
 
-class FunctionExpression extends ASTNode {
+class FunctionExpression extends Component {
     render() {
         let open = "{";
         let close = this.props.indent + "}";
@@ -101,7 +96,7 @@ class FunctionExpression extends ASTNode {
 
         let { node } = this.props;
         let params = [];
-        node.params.forEach((param, index) => {
+        state[node.params.id].forEach((param, index) => {
             if (index > 0) {
                 params.push(", ");
             }
@@ -116,28 +111,29 @@ class FunctionExpression extends ASTNode {
     }
 }
 
-class Placeholder extends ASTNode {
+class Placeholder extends Component {
     render() {
         return <span>?</span>;
     }
 }
 
-class ReturnStatement extends ASTNode {
+class ReturnStatement extends Component {
     render() {
         let { node } = this.props;
         return <div>{this.props.indent}{maybeRender(node["return"])} {maybeRender(node.argument)};</div>;
     }
 }
 
-class VariableDeclaration extends ASTNode {
+class VariableDeclaration extends Component {
     render() {
-        let decl = maybeRender(this.props.node.declarations[0]);
+        const decls = state[this.props.node.declarations.id];
+        let decl = maybeRender(decls[0]);
         let kind = maybeRender(this.props.node.kind);
         return <span>{kind} {decl}</span>;
     }
 }
 
-class ExpressionStatement extends ASTNode {
+class ExpressionStatement extends Component {
     render() {
         let { node } = this.props;
         let expression = maybeRender(node.expression);
@@ -145,9 +141,9 @@ class ExpressionStatement extends ASTNode {
     }
 }
 
-class BlockStatement extends ASTNode {
+class BlockStatement extends Component {
     render() {
-        let children = this.props.node.body.map(child => {
+        let children = state[this.props.node.body.id].map(child => {
             let result = maybeRender(child, { indent: this.props.indent });
             return result;
         });
@@ -155,14 +151,14 @@ class BlockStatement extends ASTNode {
     }
 }
 
-class BlankStatement extends ASTNode {
+class BlankStatement extends Component {
     render() {
         let { node } = this.props;
         return <div>{"\u200b"}</div>;
     }
 }
 
-class AssignmentExpression extends ASTNode {
+class AssignmentExpression extends Component {
     render() {
         let left = maybeRender(this.props.node.left);
         let right = maybeRender(this.props.node.right);
@@ -171,11 +167,11 @@ class AssignmentExpression extends ASTNode {
     }
 }
 
-class CallExpression extends ASTNode {
+class CallExpression extends Component {
     render() {
         let callee = maybeRender(this.props.node.callee);
         let args = [];
-        this.props.node.arguments.forEach((arg, index) => {
+        state[this.props.node.arguments.id].forEach((arg, index) => {
             if (index > 0) {
                 args.push(", ");
             }
@@ -185,7 +181,7 @@ class CallExpression extends ASTNode {
     }
 }
 
-class ForOfStatement extends ASTNode {
+class ForOfStatement extends Component {
     render() {
         let { node } = this.props;
         let left = maybeRender(node.left);
@@ -207,7 +203,7 @@ class ForOfStatement extends ASTNode {
     }
 }
 
-class BinaryExpression extends ASTNode {
+class BinaryExpression extends Component {
     render() {
         let left = maybeRender(this.props.node.left);
         let right = maybeRender(this.props.node.right);
@@ -216,10 +212,10 @@ class BinaryExpression extends ASTNode {
     }
 }
 
-class ArrayExpression extends ASTNode {
+class ArrayExpression extends Component {
     render() {
         let elements = [];
-        this.props.node.elements.forEach((element, index) => {
+        state[this.props.node.elements.id].forEach((element, index) => {
             if (index > 0) {
                 elements.push(", ");
             }
@@ -229,38 +225,38 @@ class ArrayExpression extends ASTNode {
     }
 }
 
-class NumberLiteral extends ASTNode {
+class NumberLiteral extends Component {
     render() {
         return <span style={{color:"#00B"}}>{this.props.node.value}</span>;
     }
 }
 
-class StringLiteral extends ASTNode {
+class StringLiteral extends Component {
     render() {
         return <span style={{color:"#900"}}>"{this.props.node.value}"</span>;
     }
 }
 
-class Operator extends ASTNode {
+class Operator extends Component {
     render() {
         return <span>{this.props.node.operator}</span>;
     }
 }
 
-class Keyword extends ASTNode {
+class Keyword extends Component {
     render() {
         return <span style={{color:"#00F"}}>{this.props.node.keyword}</span>;
     }
 }
 
-class Parentheses extends ASTNode {
+class Parentheses extends Component {
     render() {
         let { node } = this.props;
         return <span>({maybeRender(node.expression)})</span>;
     }
 }
 
-class Program extends ASTNode {
+class Program extends Component {
     render() {
         let style = {
             position: 'absolute',
@@ -270,7 +266,9 @@ class Program extends ASTNode {
 
         let { node } = this.props;
 
-        let children = node.body.map(child => maybeRender(child));
+        const body = state[node.body.id];
+
+        let children = body.map(child => maybeRender(child));
         return <div style={style}>{children}</div>;
     }
 }
@@ -302,7 +300,11 @@ let components = {
     Parentheses
 };
 
-maybeRender = function(node, props) {
+const state = store.getState();
+
+maybeRender = function(ref, props) {
+    const node = state[ref.id];
+    console.log(node);
     if (components[node.type]) {
         return React.createElement(components[node.type], { node: { ...node }, ...props });
     } else {
