@@ -34,7 +34,6 @@ class NodeEditor extends Component {
     constructor(props) {
         super(props);
 
-        this.handleClick = this.handleClick.bind(this);
         this.handleKeyDown = this.handleKeyDown.bind(this);
         this.handleKeyPress = this.handleKeyPress.bind(this);
 
@@ -53,41 +52,6 @@ class NodeEditor extends Component {
         this.headlessEditor = new HeadlessEditor(props.node);
 
         // TODO: store scrollTop as part of state to maintain scrollTop position
-    }
-
-    handleClick(e) {
-        e.preventDefault();
-
-        let elem = ReactDOM.findDOMNode(this);
-
-        // TODO: measures this on componentDidMount or when the font size changes
-        let { charWidth, charHeight } = this.state;
-        let line = Math.floor((elem.scrollTop + e.pageY - elem.offsetTop - 1) / charHeight) + 1;
-
-        let gutterWidth = 45;
-        let column = Math.round((e.pageX - elem.offsetLeft - gutterWidth) / charWidth);
-
-        let { cursorNode } = findNode(this.props.node, line, column);
-        // TODO: check if it's a leaf node
-
-        if (leafNodeTypes.includes(cursorNode.type)) {
-            console.log("cursorNode = %o", cursorNode);
-            //console.log(`line = ${line}, column = ${column}`);
-
-            this.setState({
-                cursorPosition: { line, column },
-                cursorNode
-            });
-
-            if (["Placeholder", "Operator", "Keyword"].includes(cursorNode.type)) {
-                this.setState({ selectedNodes: [cursorNode] });
-            } else {
-                this.setState({ selectedNodes: [] });
-            }
-
-            this.headlessEditor.cursorNode = cursorNode;
-            this.headlessEditor.cursorPosition = { line, column };
-        }
     }
 
     setCursorNode(cursorNode, locKey) {
@@ -164,11 +128,9 @@ class NodeEditor extends Component {
 
         let { node } = this.props;
 
-        // <Gutter count={node.loc.end.line} />
 
         // TODO use the delegate pattern to determine cursor visibility
         return <div style={style}
-                    onClick={this.handleClick}
                     onKeyDown={this.handleKeyDown}
                     onKeyPress={this.handleKeyPress}
                     tabIndex={0}>
@@ -178,6 +140,7 @@ class NodeEditor extends Component {
                 charWidth={charWidth}
                 charHeight={charHeight}
             />
+            <Gutter count={100} />
             <Program node={node} />
         </div>;
     }

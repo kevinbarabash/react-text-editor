@@ -11,7 +11,7 @@ export default class App extends Component {
 
         return <div>
             <h1>Program</h1>
-            // <NodeEditor node={root} />
+            <NodeEditor node={root} />
         </div>;
     }
 }
