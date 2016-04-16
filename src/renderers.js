@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 
 import store from './store';
 
+/*** Stateful leaf nodes ***/
 
 class Identifier extends Component {
     handleClick = (e) => {
@@ -22,258 +23,6 @@ class Identifier extends Component {
         return <span onClick={this.handleClick} style={style}>
             {this.props.node.name}
         </span>;
-    }
-}
-
-class VariableDeclarator extends Component {
-    render() {
-        let { id, init } = this.props.node;
-        if (init) {
-            return <span>
-                <ConnectedNode node={id}/> = <ConnectedNode node={init}/>
-            </span>;
-        } else {
-            return <span>
-                <ConnectedNode node={id}/>
-            </span>;
-        }
-    }
-}
-
-class LineComment extends Component {
-    render() {
-        let style = {
-            color: "rgb(76, 136, 107)"
-        };
-        return <div style={style}>// {this.props.node.content}</div>;
-    };
-}
-
-class BlockComment extends Component {
-    render() {
-        let style = {
-            color: "rgb(76, 136, 107)"
-        };
-        let lines = this.props.node.content.split("\n").map((line, index) => {
-            return <div key={index}>{" * " + line}</div>;
-        });
-
-        return <div style={style}>
-            <div>{"/*"}</div>
-            {lines}
-            <div>{" */"}</div>
-        </div>;
-    }
-}
-
-class ClassDeclaration extends Component {
-    // TODO handle 'extends' syntax
-    render() {
-        let { node } = this.props;
-        let id = <ConnectedNode node={node.id} />;
-        let body = <ConnectedNode node={node.body} />;
-        let open = " {";
-        let close = "}";
-
-        // TODO handle indentation of nested classes
-        return <div>
-            <div>
-                {<ConnectedNode node={node["class"]} />}
-                {" "}
-                <span>{id}</span>{open}
-            </div>
-            <div>{body}</div>
-            {close}
-        </div>;
-    }
-}
-
-class ClassBody extends Component {
-    render() {
-        const state = store.getState();
-        let defs = state[this.props.node.body.id].map((def, index) => {
-            return <ConnectedNode node={def} indent={'    '} key={`child-${index}`} />;
-        });
-        return <div>{defs}</div>
-    }
-}
-
-class MethodDefinition extends Component {
-    render() {
-        const { indent, node: { key, value } } = this.props;
-
-        return <div>
-            {indent}
-            <ConnectedNode node={key} />
-            <ConnectedNode node={value} method={true} indent={indent} />
-        </div>;
-    }
-}
-
-class FunctionExpression extends Component {
-    render() {
-        let open = "{";
-        let close = this.props.indent + "}";
-        let body = <ConnectedNode node={this.props.node.body} indent={this.props.indent + "    "} />;
-
-        let { node } = this.props;
-        let params = [];
-
-        const state = store.getState();
-        state[node.params.id].forEach((param, index) => {
-            if (index > 0) {
-                params.push(", ");
-            }
-            params.push(<ConnectedNode node={param} key={`param-${index}`} />);
-        });
-
-        if (this.props.method) {
-            return <span>({params}) {open}<div>{body}</div>{close}</span>;
-        } else {
-            return <span>not a method</span>
-        }
-    }
-}
-
-class Placeholder extends Component {
-    handleClick = (e) => {
-        store.dispatch({
-            type: 'SELECT',
-            node: this.props.node,
-            id: this.props.id,
-        });
-    };
-
-    render() {
-        const style = {
-            color: "#000",
-            backgroundColor: this.props.node.selected ? "#9CF" : "",
-        };
-
-        return <span onClick={this.handleClick} style={style}>?</span>;
-    }
-}
-
-class ReturnStatement extends Component {
-    render() {
-        let { node } = this.props;
-        return <div>
-            {this.props.indent}
-            <ConnectedNode node={node['return']} />
-            {' '}
-            <ConnectedNode node={node.argument} />
-        </div>;
-    }
-}
-
-class VariableDeclaration extends Component {
-    render() {
-        const state = store.getState();
-        const decls = state[this.props.node.declarations.id];
-        return <span>
-            <ConnectedNode node={this.props.node.kind} />
-            {' '}
-            <ConnectedNode node={decls[0]} />
-        </span>;
-    }
-}
-
-class ExpressionStatement extends Component {
-    render() {
-        let { node } = this.props;
-        let expression = <ConnectedNode node={node.expression} />;
-        return <div>{this.props.indent}{expression};</div>;
-    }
-}
-
-class BlockStatement extends Component {
-    render() {
-        const { indent, node: { body } } = this.props;
-        const state = store.getState();
-        let children = state[body.id].map((child, index) =>
-             <ConnectedNode node={child} indent={indent} key={`stmt-${index}`} />);
-
-        return <div style={this.props.style}>{children}</div>;
-    }
-}
-
-class BlankStatement extends Component {
-    render() {
-        let { node } = this.props;
-        return <div>{"\u200b"}</div>;
-    }
-}
-
-class AssignmentExpression extends Component {
-    render() {
-        const { left, operator, right } = this.props.node;
-        return <span>
-            <ConnectedNode node={left} />
-            {' '}
-            <ConnectedNode node={operator} />
-            {' '}
-            <ConnectedNode node={right} />
-        </span>
-    }
-}
-
-class CallExpression extends Component {
-    render() {
-        let callee = <ConnectedNode node={this.props.node.callee} />;
-        let args = [];
-        const state = store.getState();
-        state[this.props.node.arguments.id].forEach((arg, index) => {
-            if (index > 0) {
-                args.push(", ");
-            }
-            args.push(<ConnectedNode node={arg} key={`arg-${index}`}/>);
-        });
-        return <span>{callee}({args})</span>;
-    }
-}
-
-class ForOfStatement extends Component {
-    render() {
-        let { node } = this.props;
-        let left = <ConnectedNode node={node.left}/>;
-        let right = <ConnectedNode node={node.right}/>;
-        let block = <ConnectedNode node={node.body} indent={'    '} />;
-        let open = "{";
-        let close = "}";
-
-        // TODO handle indentation
-        return <div>
-            <div>
-                <ConnectedNode node={node.for}/> ({left} <ConnectedNode node={node.of}/> {right}) {open}
-            </div>
-            {block}
-            <div>
-                {close}
-            </div>
-        </div>;
-    }
-}
-
-class BinaryExpression extends Component {
-    render() {
-        let left = <ConnectedNode node={this.props.node.left} />;
-        let right = <ConnectedNode node={this.props.node.right} />;
-        let operator = <ConnectedNode node={this.props.node.operator} />;
-        return <span>{left} {operator} {right}</span>;
-    }
-}
-
-class ArrayExpression extends Component {
-    render() {
-        let elements = [];
-        const state = store.getState();
-        state[this.props.node.elements.id].forEach((element, index) => {
-            if (index > 0) {
-                elements.push(", ");
-            }
-            elements.push(<ConnectedNode node={element} key={`item-${index}`} />);
-        });
-        return <span>[{elements}]</span>;
     }
 }
 
@@ -364,54 +113,295 @@ class Keyword extends Component {
     }
 }
 
-class Parentheses extends Component {
-    render() {
-        let { expression } = this.props.node;
-        return <span>(<ConnectedNode node={expression} />)</span>;
-    }
-}
-
-class Program extends Component {
+class LineComment extends Component {
     render() {
         const style = {
-            position: 'absolute',
-            top: 0,
-            left: 45
+            color: "rgb(76, 136, 107)"
         };
+        return <div style={style}>// {this.props.node.content}</div>;
+    };
+}
 
-        const { body } = this.props.node;
-        const state = store.getState();
-        const children = state[body.id].map((child, index) =>
-            <ConnectedNode node={child} key={`stmt-${index}`} />);
+class BlockComment extends Component {
+    render() {
+        const style = {
+            color: "rgb(76, 136, 107)"
+        };
+        const lines = this.props.node.content.split("\n").map((line, index) => {
+            return <div key={index}>{" * " + line}</div>;
+        });
 
-        return <div style={style}>{children}</div>;
+        return <div style={style}>
+            <div>{"/*"}</div>
+            {lines}
+            <div>{" */"}</div>
+        </div>;
     }
 }
 
-let components = {
+class Placeholder extends Component {
+    handleClick = (e) => {
+        store.dispatch({
+            type: 'SELECT',
+            node: this.props.node,
+            id: this.props.id,
+        });
+    };
+
+    render() {
+        const style = {
+            color: "#000",
+            backgroundColor: this.props.node.selected ? "#9CF" : "",
+        };
+
+        return <span onClick={this.handleClick} style={style}>?</span>;
+    }
+}
+
+
+/*** Stateless nodes ***/
+
+const VariableDeclarator = (props) => {
+    const { id, init } = props.node;
+
+    if (init) {
+        return <span>
+            <ConnectedNode node={id}/> = <ConnectedNode node={init}/>
+        </span>;
+    } else {
+        return <span>
+            <ConnectedNode node={id}/>
+        </span>;
+    }
+};
+
+
+// TODO handle 'extends' syntax
+const ClassDeclaration = (props) =>{
+    const { node } = props;
+    const id = <ConnectedNode node={node.id} />;
+    const body = <ConnectedNode node={node.body} />;
+    const open = " {";
+    const close = "}";
+
+    // TODO handle indentation of nested classes
+    return <div>
+        <div>
+            {<ConnectedNode node={node['class']} />}
+            {' '}
+            <span>{id}</span>{open}
+        </div>
+        <div>{body}</div>
+        {close}
+    </div>;
+};
+
+const ClassBody = (props) => {
+    const state = store.getState();
+    const defs = state[props.node.body.id].map((def, index) => {
+        return <ConnectedNode node={def} indent={'    '} key={`child-${index}`} />;
+    });
+    return <div>{defs}</div>
+};
+
+const MethodDefinition = (props) => {
+    const { indent, node: { key, value } } = props;
+
+    return <div>
+        {indent}
+        <ConnectedNode node={key} />
+        <ConnectedNode node={value} method={true} indent={indent} />
+    </div>;
+};
+
+const FunctionExpression = (props) => {
+    const { indent, node, method } = props;
+
+    const open = "{";
+    const close = indent + "}";
+    const body = <ConnectedNode node={node.body} indent={indent + "    "} />;
+
+    const params = [];
+
+    const state = store.getState();
+    state[node.params.id].forEach((param, index) => {
+        if (index > 0) {
+            params.push(", ");
+        }
+        params.push(<ConnectedNode node={param} key={`param-${index}`} />);
+    });
+
+    return method
+        ? <span>({params}) {open}<div>{body}</div>{close}</span>
+        : <span>not a method</span>;
+};
+
+const ReturnStatement = (props) => {
+    const { indent, node } = props;
+
+    return <div>
+        {indent}
+        <ConnectedNode node={node['return']} />
+        {' '}
+        <ConnectedNode node={node.argument} />
+    </div>;
+};
+
+const VariableDeclaration = (props) => {
+    const state = store.getState();
+    const decls = state[props.node.declarations.id];
+
+    return <span>
+        <ConnectedNode node={props.node.kind} />
+        {' '}
+        <ConnectedNode node={decls[0]} />
+    </span>;
+};
+
+const ExpressionStatement = (props) => {
+    const { indent, node: { expression } } = props;
+
+    return <div>{indent}<ConnectedNode node={expression} />;</div>;
+};
+
+const BlockStatement = (props) => {
+    const { indent, node: { body } } = props;
+    const state = store.getState();
+
+    const children = state[body.id].map((child, index) =>
+         <ConnectedNode node={child} indent={indent} key={`stmt-${index}`} />);
+
+    return <div style={props.style}>{children}</div>;
+};
+
+const BlankStatement = () => {
+    return <div>{"\u200b"}</div>;
+};
+
+const AssignmentExpression = (props) => {
+    const { left, operator, right } = props.node;
+
+    return <span>
+        <ConnectedNode node={left} />
+        {' '}
+        <ConnectedNode node={operator} />
+        {' '}
+        <ConnectedNode node={right} />
+    </span>;
+};
+
+const CallExpression = (props) => {
+    const { callee, arguments } = props.node;
+    const args = [];
+    const state = store.getState();
+
+    state[arguments.id].forEach((arg, index) => {
+        if (index > 0) {
+            args.push(", ");
+        }
+        args.push(<ConnectedNode node={arg} key={`arg-${index}`}/>);
+    });
+
+    return <span>
+        <ConnectedNode node={callee} />
+        ({args})
+    </span>;
+};
+
+const ForOfStatement = (props) => {
+    const { node } = props;
+
+    const left = <ConnectedNode node={node.left}/>;
+    const right = <ConnectedNode node={node.right}/>;
+    const block = <ConnectedNode node={node.body} indent={'    '} />;
+    const open = "{";
+    const close = "}";
+
+    // TODO handle indentation
+    return <div>
+        <div>
+            <ConnectedNode node={node.for}/> ({left} <ConnectedNode node={node.of}/> {right}) {open}
+        </div>
+        {block}
+        <div>
+            {close}
+        </div>
+    </div>;
+};
+
+const BinaryExpression = (props) => {
+    const { left, operator, right } = props.node;
+
+    return <span>
+        <ConnectedNode node={left} />
+        {' '}
+        <ConnectedNode node={operator} />
+        {' '}
+        <ConnectedNode node={right} />
+    </span>;
+};
+
+const ArrayExpression = (props) => {
+    const elements = [];
+    const state = store.getState();
+
+    state[props.node.elements.id].forEach((element, index) => {
+        if (index > 0) {
+            elements.push(", ");
+        }
+        elements.push(<ConnectedNode node={element} key={`item-${index}`} />);
+    });
+
+    return <span>[{elements}]</span>;
+};
+
+const Parentheses = (props) => {
+    return <span>(<ConnectedNode node={props.node.expression} />)</span>;
+};
+
+const Program = (props) => {
+    const style = {
+        position: 'absolute',
+        top: 0,
+        left: 45
+    };
+
+    const { body } = props.node;
+    const state = store.getState();
+
+    const children = state[body.id].map((child, index) =>
+        <ConnectedNode node={child} key={`stmt-${index}`} />);
+
+    return <div style={style}>{children}</div>;
+};
+
+const components = {
+    /* stateful nodes */
+    Identifier,
+    NumberLiteral,
+    LineComment,
+    BlockComment,
+    Placeholder,
+    StringLiteral,
+    Operator,
+    Keyword,
+
+    /* stateless nodes */
     ForOfStatement,
     VariableDeclaration,
     VariableDeclarator,
-    Identifier,
     ArrayExpression,
-    NumberLiteral,
     BlockStatement,
     ExpressionStatement,
     BlankStatement,
     AssignmentExpression,
     BinaryExpression,
     CallExpression,
-    LineComment,
-    BlockComment,
     ClassDeclaration,
     ClassBody,
     MethodDefinition,
     FunctionExpression,
     ReturnStatement,
-    Placeholder,
-    StringLiteral,
-    Operator,
-    Keyword,
     Parentheses,
     Program,
 };
@@ -424,18 +414,14 @@ function mapStateToProps(state, ownProps) {
     };
 }
 
-class Node extends Component {
-    render() {
-        const node = this.props.node;
+const Node = (props) => {
+    const node = props.node;
+    const Element = components[node.type];
 
-        if (components[node.type]) {
-            const Element = components[node.type];
-            return <Element { ...this.props }/>;
-        } else {
-            return <span>{node.type}</span>;
-        }
-    }
-}
+    return Element
+        ? <Element { ...this.props }/>
+        : <span>{node.type}</span>;
+};
 
 const ConnectedNode = connect(mapStateToProps)(Node);
 
