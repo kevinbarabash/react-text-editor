@@ -1,10 +1,7 @@
 import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
 import { connect } from 'react-redux';
 
-import { renderAST } from './codegen';
-import { findNode, findNodePath } from './node_utils';
-import { Program } from './renderers';
+import Node from './renderers';
 
 import Selection from './selection';
 import Cursor from './cursor';
@@ -126,8 +123,9 @@ class NodeEditor extends Component {
             return <Selection charWidth={charWidth} charHeight={charHeight} node={node} />;
         });
 
-        let { node } = this.props;
-
+        const node = {
+            id: 0
+        };
 
         // TODO use the delegate pattern to determine cursor visibility
         return <div style={style}
@@ -141,7 +139,7 @@ class NodeEditor extends Component {
                 charHeight={charHeight}
             />
             <Gutter count={100} />
-            <Program node={node} />
+            <Node node={node} />
         </div>;
     }
 }
@@ -149,7 +147,5 @@ class NodeEditor extends Component {
 NodeEditor.propTypes = {
     lines: React.PropTypes.arrayOf(React.PropTypes.string)
 };
-
-// const ConnectedNodeEditor = connect(state => state)(NodeEditor);
 
 export default NodeEditor;

@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { connect } from 'react-redux';
 
 import store from './store';
 
@@ -14,9 +15,13 @@ class VariableDeclarator extends Component {
     render() {
         let { id, init } = this.props.node;
         if (init) {
-            return <span>{maybeRender(id)} = {maybeRender(init)}</span>;
+            return <span>
+                <ConnectedNode node={id}/> = <ConnectedNode node={init}/>
+            </span>;
         } else {
-            return <span>{maybeRender(id)}</span>;
+            return <span>
+                <ConnectedNode node={id}/>
+            </span>;
         }
     }
 }
@@ -71,6 +76,7 @@ class ClassDeclaration extends Component {
 
 class ClassBody extends Component {
     render() {
+        const state = store.getState();
         let defs = state[this.props.node.body.id].map(def => {
             let result = maybeRender(def, { indent: "    " });
             return result;
@@ -96,6 +102,7 @@ class FunctionExpression extends Component {
 
         let { node } = this.props;
         let params = [];
+        const state = store.getState();
         state[node.params.id].forEach((param, index) => {
             if (index > 0) {
                 params.push(", ");
@@ -126,6 +133,7 @@ class ReturnStatement extends Component {
 
 class VariableDeclaration extends Component {
     render() {
+        const state = store.getState();
         const decls = state[this.props.node.declarations.id];
         let decl = maybeRender(decls[0]);
         let kind = maybeRender(this.props.node.kind);
@@ -143,6 +151,7 @@ class ExpressionStatement extends Component {
 
 class BlockStatement extends Component {
     render() {
+        const state = store.getState();
         let children = state[this.props.node.body.id].map(child => {
             let result = maybeRender(child, { indent: this.props.indent });
             return result;
@@ -171,6 +180,7 @@ class CallExpression extends Component {
     render() {
         let callee = maybeRender(this.props.node.callee);
         let args = [];
+        const state = store.getState();
         state[this.props.node.arguments.id].forEach((arg, index) => {
             if (index > 0) {
                 args.push(", ");
@@ -184,8 +194,8 @@ class CallExpression extends Component {
 class ForOfStatement extends Component {
     render() {
         let { node } = this.props;
-        let left = maybeRender(node.left);
-        let right = maybeRender(node.right);
+        let left = <ConnectedNode node={node.left}/>;
+        let right = <ConnectedNode node={node.right}/>;
         let block = maybeRender(node.body, { indent: "    " });
         let open = "{";
         let close = "}";
@@ -193,7 +203,7 @@ class ForOfStatement extends Component {
         // TODO handle indentation
         return <div>
             <div>
-                {maybeRender(node.for)} ({left} {maybeRender(node.of)} {right}) {open}
+                <ConnectedNode node={node.for}/> ({left} <ConnectedNode node={node.of}/> {right}) {open}
             </div>
             {block}
             <div>
@@ -215,6 +225,7 @@ class BinaryExpression extends Component {
 class ArrayExpression extends Component {
     render() {
         let elements = [];
+        const state = store.getState();
         state[this.props.node.elements.id].forEach((element, index) => {
             if (index > 0) {
                 elements.push(", ");
@@ -244,8 +255,35 @@ class Operator extends Component {
 }
 
 class Keyword extends Component {
+    constructor() {
+        super();
+        this.handleClick = this.handleClick.bind(this);
+    }
+
+    handleClick(e) {
+        store.dispatch({
+            type: 'SELECT',
+            node: this.props.node,
+            id: this.props.id,
+        });
+    }
+
     render() {
-        return <span style={{color:"#00F"}}>{this.props.node.keyword}</span>;
+        const node = this.props.node;
+
+        const style = {
+            color: "#00F",
+            backgroundColor: this.props.node.selected ? "#07F" : "",
+        };
+
+        if (node.keyword === 'for' && this.props.id === 6) {
+            console.log(this.props.node);
+        }
+
+        return <span
+            onClick={this.handleClick}
+            style={style}
+        >{node.keyword}</span>;
     }
 }
 
@@ -266,9 +304,10 @@ class Program extends Component {
 
         let { node } = this.props;
 
+        const state = store.getState();
         const body = state[node.body.id];
 
-        let children = body.map(child => maybeRender(child));
+        let children = body.map(child => <ConnectedNode node={child}/>);
         return <div style={style}>{children}</div>;
     }
 }
@@ -297,14 +336,13 @@ let components = {
     StringLiteral,
     Operator,
     Keyword,
-    Parentheses
+    Parentheses,
+    Program,
 };
 
-const state = store.getState();
-
 maybeRender = function(ref, props) {
+    const state = store.getState();
     const node = state[ref.id];
-    console.log(node);
     if (components[node.type]) {
         return React.createElement(components[node.type], { node: { ...node }, ...props });
     } else {
@@ -312,4 +350,30 @@ maybeRender = function(ref, props) {
     }
 };
 
-export { Program };
+function mapStateToProps(state, ownProps) {
+    const node = state[ownProps.node.id];
+    if (node.type === 'Keyword' && node.keyword === 'for') {
+        console.log(node);
+    }
+    return {
+        node: node,
+        id: ownProps.node.id,
+    };
+}
+
+class Node extends Component {
+    render() {
+        const node = this.props.node;
+
+        if (components[node.type]) {
+            const Element = components[node.type];
+            return <Element { ...this.props }/>;
+        } else {
+            return <span>{node.type}</span>;
+        }
+    }
+}
+
+const ConnectedNode = connect(mapStateToProps)(Node);
+
+export default ConnectedNode;

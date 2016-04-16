@@ -4,10 +4,22 @@ import gehry from 'gehry';
 import prog from './prog';
 
 const nodes = gehry.deconstruct(prog);
-console.log(nodes);
 
-const reducer = function(state = prog, action) {
-    return nodes;
+const reducer = function(state = nodes, action) {
+    switch(action.type) {
+        case 'SELECT':
+            console.log("---SELECT---");
+            console.log(action);
+            return {
+                ...state,
+                [action.id]: {
+                    ...action.node,
+                    selected: true,
+                }
+            };
+        default:
+            return state;
+    }
 };
 
 const store = createStore(reducer);
