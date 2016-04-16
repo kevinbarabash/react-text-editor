@@ -8,8 +8,6 @@ const nodes = gehry.deconstruct(prog);
 const reducer = function(state = nodes, action) {
     switch(action.type) {
         case 'SELECT':
-            console.log("---SELECT---");
-            console.log(action);
             return {
                 ...state,
                 [action.id]: {

@@ -3,11 +3,25 @@ import { connect } from 'react-redux';
 
 import store from './store';
 
-let maybeRender;
 
 class Identifier extends Component {
+    handleClick = (e) => {
+        store.dispatch({
+            type: 'SELECT',
+            node: this.props.node,
+            id: this.props.id,
+        });
+    };
+
     render() {
-        return <span>{this.props.node.name}</span>;
+        const style = {
+            color: "#000",
+            backgroundColor: this.props.node.selected ? "#9CF" : "",
+        };
+
+        return <span onClick={this.handleClick} style={style}>
+            {this.props.node.name}
+        </span>;
     }
 }
 
@@ -40,8 +54,8 @@ class BlockComment extends Component {
         let style = {
             color: "rgb(76, 136, 107)"
         };
-        let lines = this.props.node.content.split("\n").map(line => {
-            return <div>{" * " + line}</div>;
+        let lines = this.props.node.content.split("\n").map((line, index) => {
+            return <div key={index}>{" * " + line}</div>;
         });
 
         return <div style={style}>
@@ -56,15 +70,15 @@ class ClassDeclaration extends Component {
     // TODO handle 'extends' syntax
     render() {
         let { node } = this.props;
-        let id = maybeRender(node.id);
-        let body = maybeRender(node.body);
+        let id = <ConnectedNode node={node.id} />;
+        let body = <ConnectedNode node={node.body} />;
         let open = " {";
         let close = "}";
 
         // TODO handle indentation of nested classes
         return <div>
             <div>
-                {maybeRender(node["class"])}
+                {<ConnectedNode node={node["class"]} />}
                 {" "}
                 <span>{id}</span>{open}
             </div>
@@ -77,9 +91,8 @@ class ClassDeclaration extends Component {
 class ClassBody extends Component {
     render() {
         const state = store.getState();
-        let defs = state[this.props.node.body.id].map(def => {
-            let result = maybeRender(def, { indent: "    " });
-            return result;
+        let defs = state[this.props.node.body.id].map((def, index) => {
+            return <ConnectedNode node={def} indent={'    '} key={`child-${index}`} />;
         });
         return <div>{defs}</div>
     }
@@ -87,10 +100,13 @@ class ClassBody extends Component {
 
 class MethodDefinition extends Component {
     render() {
-        let { node } = this.props;
-        let key = maybeRender(node.key);
-        let value = maybeRender(node.value, { method: true, indent: this.props.indent });
-        return <div>{this.props.indent}{key}{value}</div>;
+        const { indent, node: { key, value } } = this.props;
+
+        return <div>
+            {indent}
+            <ConnectedNode node={key} />
+            <ConnectedNode node={value} method={true} indent={indent} />
+        </div>;
     }
 }
 
@@ -98,16 +114,17 @@ class FunctionExpression extends Component {
     render() {
         let open = "{";
         let close = this.props.indent + "}";
-        let body = maybeRender(this.props.node.body, { indent: this.props.indent + "    " });
+        let body = <ConnectedNode node={this.props.node.body} indent={this.props.indent + "    "} />;
 
         let { node } = this.props;
         let params = [];
+
         const state = store.getState();
         state[node.params.id].forEach((param, index) => {
             if (index > 0) {
                 params.push(", ");
             }
-            params.push(maybeRender(param));
+            params.push(<ConnectedNode node={param} key={`param-${index}`} />);
         });
 
         if (this.props.method) {
@@ -119,15 +136,33 @@ class FunctionExpression extends Component {
 }
 
 class Placeholder extends Component {
+    handleClick = (e) => {
+        store.dispatch({
+            type: 'SELECT',
+            node: this.props.node,
+            id: this.props.id,
+        });
+    };
+
     render() {
-        return <span>?</span>;
+        const style = {
+            color: "#000",
+            backgroundColor: this.props.node.selected ? "#9CF" : "",
+        };
+
+        return <span onClick={this.handleClick} style={style}>?</span>;
     }
 }
 
 class ReturnStatement extends Component {
     render() {
         let { node } = this.props;
-        return <div>{this.props.indent}{maybeRender(node["return"])} {maybeRender(node.argument)};</div>;
+        return <div>
+            {this.props.indent}
+            <ConnectedNode node={node['return']} />
+            {' '}
+            <ConnectedNode node={node.argument} />
+        </div>;
     }
 }
 
@@ -135,27 +170,29 @@ class VariableDeclaration extends Component {
     render() {
         const state = store.getState();
         const decls = state[this.props.node.declarations.id];
-        let decl = maybeRender(decls[0]);
-        let kind = maybeRender(this.props.node.kind);
-        return <span>{kind} {decl}</span>;
+        return <span>
+            <ConnectedNode node={this.props.node.kind} />
+            {' '}
+            <ConnectedNode node={decls[0]} />
+        </span>;
     }
 }
 
 class ExpressionStatement extends Component {
     render() {
         let { node } = this.props;
-        let expression = maybeRender(node.expression);
+        let expression = <ConnectedNode node={node.expression} />;
         return <div>{this.props.indent}{expression};</div>;
     }
 }
 
 class BlockStatement extends Component {
     render() {
+        const { indent, node: { body } } = this.props;
         const state = store.getState();
-        let children = state[this.props.node.body.id].map(child => {
-            let result = maybeRender(child, { indent: this.props.indent });
-            return result;
-        });
+        let children = state[body.id].map((child, index) =>
+             <ConnectedNode node={child} indent={indent} key={`stmt-${index}`} />);
+
         return <div style={this.props.style}>{children}</div>;
     }
 }
@@ -169,23 +206,27 @@ class BlankStatement extends Component {
 
 class AssignmentExpression extends Component {
     render() {
-        let left = maybeRender(this.props.node.left);
-        let right = maybeRender(this.props.node.right);
-        let operator = maybeRender(this.props.node.operator);
-        return <span>{left} {operator} {right}</span>;
+        const { left, operator, right } = this.props.node;
+        return <span>
+            <ConnectedNode node={left} />
+            {' '}
+            <ConnectedNode node={operator} />
+            {' '}
+            <ConnectedNode node={right} />
+        </span>
     }
 }
 
 class CallExpression extends Component {
     render() {
-        let callee = maybeRender(this.props.node.callee);
+        let callee = <ConnectedNode node={this.props.node.callee} />;
         let args = [];
         const state = store.getState();
         state[this.props.node.arguments.id].forEach((arg, index) => {
             if (index > 0) {
                 args.push(", ");
             }
-            args.push(maybeRender(arg));
+            args.push(<ConnectedNode node={arg} key={`arg-${index}`}/>);
         });
         return <span>{callee}({args})</span>;
     }
@@ -196,7 +237,7 @@ class ForOfStatement extends Component {
         let { node } = this.props;
         let left = <ConnectedNode node={node.left}/>;
         let right = <ConnectedNode node={node.right}/>;
-        let block = maybeRender(node.body, { indent: "    " });
+        let block = <ConnectedNode node={node.body} indent={'    '} />;
         let open = "{";
         let close = "}";
 
@@ -215,9 +256,9 @@ class ForOfStatement extends Component {
 
 class BinaryExpression extends Component {
     render() {
-        let left = maybeRender(this.props.node.left);
-        let right = maybeRender(this.props.node.right);
-        let operator = maybeRender(this.props.node.operator);
+        let left = <ConnectedNode node={this.props.node.left} />;
+        let right = <ConnectedNode node={this.props.node.right} />;
+        let operator = <ConnectedNode node={this.props.node.operator} />;
         return <span>{left} {operator} {right}</span>;
     }
 }
@@ -230,84 +271,119 @@ class ArrayExpression extends Component {
             if (index > 0) {
                 elements.push(", ");
             }
-            elements.push(maybeRender(element));
+            elements.push(<ConnectedNode node={element} key={`item-${index}`} />);
         });
         return <span>[{elements}]</span>;
     }
 }
 
 class NumberLiteral extends Component {
-    render() {
-        return <span style={{color:"#00B"}}>{this.props.node.value}</span>;
-    }
-}
-
-class StringLiteral extends Component {
-    render() {
-        return <span style={{color:"#900"}}>"{this.props.node.value}"</span>;
-    }
-}
-
-class Operator extends Component {
-    render() {
-        return <span>{this.props.node.operator}</span>;
-    }
-}
-
-class Keyword extends Component {
-    constructor() {
-        super();
-        this.handleClick = this.handleClick.bind(this);
-    }
-
-    handleClick(e) {
+    handleClick = (e) => {
         store.dispatch({
             type: 'SELECT',
             node: this.props.node,
             id: this.props.id,
         });
+    };
+
+    render() {
+        const style = {
+            color: "#00B",
+            backgroundColor: this.props.node.selected ? "#9CF" : "",
+        };
+
+        return <span onClick={this.handleClick} style={style}>
+            {this.props.node.value}
+        </span>;
     }
+}
+
+class StringLiteral extends Component {
+    handleClick = (e) => {
+        store.dispatch({
+            type: 'SELECT',
+            node: this.props.node,
+            id: this.props.id,
+        });
+    };
+
+    render() {
+        const style = {
+            color: "#900",
+            backgroundColor: this.props.node.selected ? "#9CF" : "",
+        };
+
+        // TODO: check whether a user types ' or " to start a string
+        return <span onClick={this.handleClick} style={style}>
+            "{this.props.node.value}"
+        </span>;
+    }
+}
+
+class Operator extends Component {
+    handleClick = (e) => {
+        store.dispatch({
+            type: 'SELECT',
+            node: this.props.node,
+            id: this.props.id,
+        });
+    };
+
+    render() {
+        const style = {
+            color: "#000",
+            backgroundColor: this.props.node.selected ? "#9CF" : "",
+        };
+
+        return <span onClick={this.handleClick} style={style}>
+            {this.props.node.operator}
+        </span>;
+    }
+}
+
+class Keyword extends Component {
+    handleClick = (e) => {
+        store.dispatch({
+            type: 'SELECT',
+            node: this.props.node,
+            id: this.props.id,
+        });
+    };
 
     render() {
         const node = this.props.node;
 
         const style = {
             color: "#00F",
-            backgroundColor: this.props.node.selected ? "#07F" : "",
+            backgroundColor: this.props.node.selected ? "#9CF" : "",
         };
 
-        if (node.keyword === 'for' && this.props.id === 6) {
-            console.log(this.props.node);
-        }
-
-        return <span
-            onClick={this.handleClick}
-            style={style}
-        >{node.keyword}</span>;
+        return <span onClick={this.handleClick} style={style}>
+            {node.keyword}
+        </span>;
     }
 }
 
 class Parentheses extends Component {
     render() {
-        let { node } = this.props;
-        return <span>({maybeRender(node.expression)})</span>;
+        let { expression } = this.props.node;
+        return <span>(<ConnectedNode node={expression} />)</span>;
     }
 }
 
 class Program extends Component {
     render() {
-        let style = {
+        const style = {
             position: 'absolute',
             top: 0,
             left: 45
         };
 
-        let { node } = this.props;
-
+        const { body } = this.props.node;
         const state = store.getState();
-        const body = state[node.body.id];
+        const children = state[body.id].map((child, index) =>
+            <ConnectedNode node={child} key={`stmt-${index}`} />);
 
-        let children = body.map(child => <ConnectedNode node={child}/>);
         return <div style={style}>{children}</div>;
     }
 }
@@ -340,21 +416,8 @@ let components = {
     Program,
 };
 
-maybeRender = function(ref, props) {
-    const state = store.getState();
-    const node = state[ref.id];
-    if (components[node.type]) {
-        return React.createElement(components[node.type], { node: { ...node }, ...props });
-    } else {
-        return <span>{node.type}</span>;
-    }
-};
-
 function mapStateToProps(state, ownProps) {
     const node = state[ownProps.node.id];
-    if (node.type === 'Keyword' && node.keyword === 'for') {
-        console.log(node);
-    }
     return {
         node: node,
         id: ownProps.node.id,

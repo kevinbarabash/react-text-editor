@@ -11,7 +11,7 @@ class Gutter extends Component {
         };
         let lines = [];
         for (let i = 0; i < count; i++) {
-            lines.push(<div>{i+1}</div>);
+            lines.push(<div key={`line-${i+i}`}>{i+1}</div>);
         }
 
         return <div style={style}>
