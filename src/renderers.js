@@ -291,11 +291,10 @@ const AssignmentExpression = (props) => {
 };
 
 const CallExpression = (props) => {
-    const { callee, arguments } = props.node;
     const args = [];
     const state = store.getState();
 
-    state[arguments.id].forEach((arg, index) => {
+    state[props.node.arguments.id].forEach((arg, index) => {
         if (index > 0) {
             args.push(", ");
         }
@@ -303,7 +302,7 @@ const CallExpression = (props) => {
     });
 
     return <span>
-        <ConnectedNode node={callee} />
+        <ConnectedNode node={props.node.callee} />
         ({args})
     </span>;
 };
@@ -419,7 +418,7 @@ const Node = (props) => {
     const Element = components[node.type];
 
     return Element
-        ? <Element { ...this.props }/>
+        ? <Element { ...props }/>
         : <span>{node.type}</span>;
 };
 
