@@ -17,7 +17,7 @@ class Identifier extends Component {
     render() {
         const style = {
             color: "#000",
-            backgroundColor: this.props.node.selected ? "#9CF" : "",
+            backgroundColor: this.props.selected ? "#9CF" : "",
         };
 
         return <span onClick={this.handleClick} style={style}>
@@ -38,7 +38,7 @@ class NumberLiteral extends Component {
     render() {
         const style = {
             color: "#00B",
-            backgroundColor: this.props.node.selected ? "#9CF" : "",
+            backgroundColor: this.props.selected ? "#9CF" : "",
         };
 
         return <span onClick={this.handleClick} style={style}>
@@ -59,7 +59,7 @@ class StringLiteral extends Component {
     render() {
         const style = {
             color: "#900",
-            backgroundColor: this.props.node.selected ? "#9CF" : "",
+            backgroundColor: this.props.selected ? "#9CF" : "",
         };
 
         // TODO: check whether a user types ' or " to start a string
@@ -81,7 +81,7 @@ class Operator extends Component {
     render() {
         const style = {
             color: "#000",
-            backgroundColor: this.props.node.selected ? "#9CF" : "",
+            backgroundColor: this.props.selected ? "#9CF" : "",
         };
 
         return <span onClick={this.handleClick} style={style}>
@@ -104,7 +104,7 @@ class Keyword extends Component {
 
         const style = {
             color: "#00F",
-            backgroundColor: this.props.node.selected ? "#9CF" : "",
+            backgroundColor: this.props.selected ? "#9CF" : "",
         };
 
         return <span onClick={this.handleClick} style={style}>
@@ -151,7 +151,7 @@ class Placeholder extends Component {
     render() {
         const style = {
             color: "#000",
-            backgroundColor: this.props.node.selected ? "#9CF" : "",
+            backgroundColor: this.props.selected ? "#9CF" : "",
         };
 
         return <span onClick={this.handleClick} style={style}>?</span>;
@@ -197,8 +197,8 @@ const ClassDeclaration = (props) =>{
 };
 
 const ClassBody = (props) => {
-    const state = store.getState();
-    const defs = state[props.node.body.id].map((def, index) => {
+    const nodes = store.getState().nodes;
+    const defs = nodes[props.node.body.id].map((def, index) => {
         return <ConnectedNode node={def} indent={'    '} key={`child-${index}`} />;
     });
     return <div>{defs}</div>
@@ -223,8 +223,8 @@ const FunctionExpression = (props) => {
 
     const params = [];
 
-    const state = store.getState();
-    state[node.params.id].forEach((param, index) => {
+    const nodes = store.getState().nodes;
+    nodes[node.params.id].forEach((param, index) => {
         if (index > 0) {
             params.push(", ");
         }
@@ -248,8 +248,8 @@ const ReturnStatement = (props) => {
 };
 
 const VariableDeclaration = (props) => {
-    const state = store.getState();
-    const decls = state[props.node.declarations.id];
+    const nodes = store.getState().nodes;
+    const decls = nodes[props.node.declarations.id];
 
     return <span>
         <ConnectedNode node={props.node.kind} />
@@ -266,9 +266,9 @@ const ExpressionStatement = (props) => {
 
 const BlockStatement = (props) => {
     const { indent, node: { body } } = props;
-    const state = store.getState();
+    const nodes = store.getState().nodes;
 
-    const children = state[body.id].map((child, index) =>
+    const children = nodes[body.id].map((child, index) =>
          <ConnectedNode node={child} indent={indent} key={`stmt-${index}`} />);
 
     return <div style={props.style}>{children}</div>;
@@ -292,9 +292,9 @@ const AssignmentExpression = (props) => {
 
 const CallExpression = (props) => {
     const args = [];
-    const state = store.getState();
+    const nodes = store.getState().nodes;
 
-    state[props.node.arguments.id].forEach((arg, index) => {
+    nodes[props.node.arguments.id].forEach((arg, index) => {
         if (index > 0) {
             args.push(", ");
         }
@@ -342,9 +342,9 @@ const BinaryExpression = (props) => {
 
 const ArrayExpression = (props) => {
     const elements = [];
-    const state = store.getState();
+    const nodes = store.getState().nodes;
 
-    state[props.node.elements.id].forEach((element, index) => {
+    nodes[props.node.elements.id].forEach((element, index) => {
         if (index > 0) {
             elements.push(", ");
         }
@@ -366,9 +366,9 @@ const Program = (props) => {
     };
 
     const { body } = props.node;
-    const state = store.getState();
+    const nodes = store.getState().nodes;
 
-    const children = state[body.id].map((child, index) =>
+    const children = nodes[body.id].map((child, index) =>
         <ConnectedNode node={child} key={`stmt-${index}`} />);
 
     return <div style={style}>{children}</div>;
@@ -406,10 +406,10 @@ const components = {
 };
 
 function mapStateToProps(state, ownProps) {
-    const node = state[ownProps.node.id];
     return {
-        node: node,
         id: ownProps.node.id,
+        node: state.nodes[ownProps.node.id],
+        selected: state.selectedNode === ownProps.node.id
     };
 }
 

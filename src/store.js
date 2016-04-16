@@ -5,16 +5,21 @@ import prog from './prog';
 
 const nodes = gehry.deconstruct(prog);
 
-const reducer = function(state = nodes, action) {
+const defaultState = {
+    nodes: nodes,
+    selectedNode: null,
+};
+
+const reducer = function(state = defaultState, action) {
+    const { selectedNode } = state;
+
     switch(action.type) {
         case 'SELECT':
             return {
                 ...state,
-                [action.id]: {
-                    ...action.node,
-                    selected: true,
-                }
+                selectedNode: selectedNode !== action.id ? action.id : null,
             };
+
         default:
             return state;
     }
