@@ -1,70 +1,139 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
+import Cursor from './Cursor';
 import store from './store';
 
 /*** Stateful leaf nodes ***/
 
 class Identifier extends Component {
     handleClick = (e) => {
+        const name = this.props.node.name;
+
+        const span = this._span;
+        const bounds = span.getBoundingClientRect();
+        const width = bounds.right - bounds.left;
+
+        const charWidth = width / name.length;
+        const pos = Math.round((e.pageX - bounds.left) / charWidth);
+
         store.dispatch({
             type: 'SELECT',
-            node: this.props.node,
             id: this.props.id,
+            node: this.props.node,
+            pos: pos,
         });
     };
 
     render() {
-        const style = {
-            color: "#000",
-            backgroundColor: this.props.selected ? "#9CF" : "",
-        };
+        let content = this.props.node.name;
+        const { selection } = this.props;
 
-        return <span onClick={this.handleClick} style={style}>
-            {this.props.node.name}
+        if (selection) {
+            const before = content.substring(0, selection.pos);
+            const after = content.substring(selection.pos);
+            content = [
+                <span key='before'>{before}</span>,
+                <Cursor key='cursor'/>,
+                <span key='after'>{after}</span>
+            ];
+        }
+
+        return <span
+            onClick={this.handleClick}
+            ref={node => this._span = node}
+            style={{color: "#000"}}
+        >
+            {content}
         </span>;
     }
 }
 
 class NumberLiteral extends Component {
     handleClick = (e) => {
+        const value = this.props.node.value;
+
+        const span = this._span;
+        const bounds = span.getBoundingClientRect();
+        const width = bounds.right - bounds.left;
+
+        const charWidth = width / value.length;
+        const pos = Math.round((e.pageX - bounds.left) / charWidth);
+
         store.dispatch({
             type: 'SELECT',
-            node: this.props.node,
             id: this.props.id,
+            node: this.props.node,
+            pos: pos,
         });
     };
 
     render() {
-        const style = {
-            color: "#00B",
-            backgroundColor: this.props.selected ? "#9CF" : "",
-        };
+        let content = this.props.node.value;
+        const { selection } = this.props;
 
-        return <span onClick={this.handleClick} style={style}>
-            {this.props.node.value}
+        if (selection) {
+            const selection = store.getState().selection;
+            const before = content.substring(0, selection.pos);
+            const after = content.substring(selection.pos);
+            content = [
+                <span key='before'>{before}</span>,
+                <Cursor key='cursor'/>,
+                <span key='after'>{after}</span>
+            ];
+        }
+
+        return <span
+            onClick={this.handleClick}
+            ref={node => this._span = node}
+            style={{color: "#00B"}}
+        >
+            {content}
         </span>;
     }
 }
 
 class StringLiteral extends Component {
     handleClick = (e) => {
+        const value = `"${this.props.node.value}"`;
+
+        const span = this._span;
+        const bounds = span.getBoundingClientRect();
+        const width = bounds.right - bounds.left;
+
+        const charWidth = width / value.length;
+        const pos = Math.round((e.pageX - bounds.left) / charWidth);
+
         store.dispatch({
             type: 'SELECT',
-            node: this.props.node,
             id: this.props.id,
+            node: this.props.node,
+            pos: pos,
         });
     };
 
     render() {
-        const style = {
-            color: "#900",
-            backgroundColor: this.props.selected ? "#9CF" : "",
-        };
+        let content = `"${this.props.node.value}"`;
+        const { selection } = this.props;
+
+        if (selection) {
+            const selection = store.getState().selection;
+            const before = content.substring(0, selection.pos);
+            const after = content.substring(selection.pos);
+            content = [
+                <span key='before'>{before}</span>,
+                <Cursor key='cursor'/>,
+                <span key='after'>{after}</span>
+            ];
+        }
 
         // TODO: check whether a user types ' or " to start a string
-        return <span onClick={this.handleClick} style={style}>
-            "{this.props.node.value}"
+        return <span
+            onClick={this.handleClick}
+            ref={node => this._span = node}
+            style={{color: "#900"}}
+        >
+            {content}
         </span>;
     }
 }
@@ -79,9 +148,11 @@ class Operator extends Component {
     };
 
     render() {
+        const { selection } = this.props;
+
         const style = {
             color: "#000",
-            backgroundColor: this.props.selected ? "#9CF" : "",
+            backgroundColor: selection ? "#9CF" : "",
         };
 
         return <span onClick={this.handleClick} style={style}>
@@ -101,10 +172,11 @@ class Keyword extends Component {
 
     render() {
         const node = this.props.node;
+        const { selection } = this.props;
 
         const style = {
             color: "#00F",
-            backgroundColor: this.props.selected ? "#9CF" : "",
+            backgroundColor: selection ? "#9CF" : "",
         };
 
         return <span onClick={this.handleClick} style={style}>
@@ -149,9 +221,11 @@ class Placeholder extends Component {
     };
 
     render() {
+        const { selection } = this.props;
+
         const style = {
             color: "#000",
-            backgroundColor: this.props.selected ? "#9CF" : "",
+            backgroundColor: selection ? "#9CF" : "",
         };
 
         return <span onClick={this.handleClick} style={style}>?</span>;
@@ -406,11 +480,18 @@ const components = {
 };
 
 function mapStateToProps(state, ownProps) {
-    return {
-        id: ownProps.node.id,
-        node: state.nodes[ownProps.node.id],
-        selected: state.selectedNode === ownProps.node.id
-    };
+    if (state.selection && state.selection.id === ownProps.node.id) {
+        return {
+            id: ownProps.node.id,
+            node: state.nodes[ownProps.node.id],
+            selection: state.selection,
+        };
+    } else {
+        return {
+            id: ownProps.node.id,
+            node: state.nodes[ownProps.node.id],
+        };
+    }
 }
 
 const Node = (props) => {

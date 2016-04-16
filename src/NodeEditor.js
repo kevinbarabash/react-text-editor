@@ -1,13 +1,8 @@
 import React, { Component } from 'react';
-import { connect } from 'react-redux';
 
 import Node from './renderers';
-
 import Selection from './selection';
-import Cursor from './cursor';
 import Gutter from './gutter';
-
-import { leaves, orderings } from './ast_data';
 
 import HeadlessEditor from './HeadlessEditor';
 
@@ -133,11 +128,6 @@ class NodeEditor extends Component {
                     onKeyPress={this.handleKeyPress}
                     tabIndex={0}>
             {selections}
-            <Cursor {...this.state.cursorPosition}
-                visible={this.state.selectedNodes.length === 0}
-                charWidth={charWidth}
-                charHeight={charHeight}
-            />
             <Gutter count={100} />
             <Node node={node} />
         </div>;

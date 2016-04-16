@@ -116,7 +116,7 @@ var prog = {
             }
         },
         { type: "BlankStatement" },
-        { 
+        {
             type: "ExpressionStatement",
             expression: {
                 type: "AssignmentExpression",
@@ -164,7 +164,7 @@ var prog = {
             type: "ClassDeclaration",
             "class": {
                 type: "Keyword",
-                keyword: "class"  
+                keyword: "class"
             },
             id: {
                 type: "Identifier",

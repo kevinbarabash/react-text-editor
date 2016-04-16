@@ -1,12 +1,9 @@
 import React, { Component } from 'react';
 
 class Cursor extends Component {
-    constructor() {
-        super();
-        this.state = {
-            opacity: 1
-        };
-    }
+    state = {
+        opacity: 1
+    };
 
     startBlinking() {
         this.interval = setInterval(() => {
@@ -26,40 +23,18 @@ class Cursor extends Component {
         clearInterval(this.interval);
     }
 
-    componentWillUpdate(nextProps, nextState) {
-        if (nextProps.column !== this.props.column || nextProps.line !== this.props.line) {
-            clearInterval(this.interval);
-            this.startBlinking();
-            this.setState({ opacity: 1 });
-        }
-    }
-
     render() {
-        let cursorWidth = 2;
-        let gutterWidth = 45;
-        let { charWidth, charHeight } = this.props;
-        let style = {
-            position: 'absolute',
-            left: this.props.column * charWidth - 1 + gutterWidth,
-            top: (this.props.line - 1) * charHeight,
-            width: cursorWidth,
-            height: charHeight,
-            background: 'black',
-            opacity: this.props.visible ? this.state.opacity : 0
+        const style = {
+            display: 'inline-block',
+            backgroundColor: 'black',
+            width: 2,
+            marginRight: -1,
+            marginLeft: -1,
+            opacity: this.state.opacity,
         };
 
-        return <div style={style}></div>;
+        return <div style={style}>{'\u200b'}</div>
     }
 }
-
-Cursor.defaultProps = {
-    visible: true
-};
-
-Cursor.propTypes = {
-    visible: React.PropTypes.bool,
-    charWidth: React.PropTypes.number,
-    charHeight: React.PropTypes.number
-};
 
 export default Cursor;

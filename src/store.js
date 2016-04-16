@@ -7,18 +7,28 @@ const nodes = gehry.deconstruct(prog);
 
 const defaultState = {
     nodes: nodes,
-    selectedNode: null,
+    selection: null,
 };
 
 const reducer = function(state = defaultState, action) {
-    const { selectedNode } = state;
+    const { selection } = state;
 
     switch(action.type) {
         case 'SELECT':
-            return {
-                ...state,
-                selectedNode: selectedNode !== action.id ? action.id : null,
-            };
+            if (selection && selection.id === action.id && selection.pos === action.pos) {
+                return {
+                    ...state,
+                    selection: null,
+                };
+            } else {
+                return {
+                    ...state,
+                    selection: {
+                        id: action.id,
+                        pos: action.pos,
+                    },
+                };
+            }
 
         default:
             return state;
