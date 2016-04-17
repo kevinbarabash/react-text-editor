@@ -273,27 +273,30 @@ const ClassDeclaration = (props) =>{
 const ClassBody = (props) => {
     const nodes = store.getState().nodes;
     const defs = nodes[props.node.body.id].map((def, index) => {
-        return <ConnectedNode node={def} indent={'    '} key={`child-${index}`} />;
+        return <ConnectedNode node={def} key={`child-${index}`} />;
     });
-    return <div>{defs}</div>
+
+    const style = {
+        marginLeft: 40,
+    };
+    return <div style={style}>{defs}</div>
 };
 
 const MethodDefinition = (props) => {
     const { indent, node: { key, value } } = props;
 
     return <div>
-        {indent}
         <ConnectedNode node={key} />
-        <ConnectedNode node={value} method={true} indent={indent} />
+        <ConnectedNode node={value} method={true} />
     </div>;
 };
 
 const FunctionExpression = (props) => {
-    const { indent, node, method } = props;
+    const { node, method } = props;
 
     const open = "{";
-    const close = indent + "}";
-    const body = <ConnectedNode node={node.body} indent={indent + "    "} />;
+    const close = "}";
+    const body = <ConnectedNode node={node.body} />;
 
     const params = [];
 
@@ -311,10 +314,9 @@ const FunctionExpression = (props) => {
 };
 
 const ReturnStatement = (props) => {
-    const { indent, node } = props;
+    const { node } = props;
 
     return <div>
-        {indent}
         <ConnectedNode node={node['return']} />
         {' '}
         <ConnectedNode node={node.argument} />
@@ -333,19 +335,23 @@ const VariableDeclaration = (props) => {
 };
 
 const ExpressionStatement = (props) => {
-    const { indent, node: { expression } } = props;
+    const {  node: { expression } } = props;
 
-    return <div>{indent}<ConnectedNode node={expression} />;</div>;
+    return <div><ConnectedNode node={expression} />;</div>;
 };
 
 const BlockStatement = (props) => {
-    const { indent, node: { body } } = props;
+    const { node: { body } } = props;
     const nodes = store.getState().nodes;
 
     const children = nodes[body.id].map((child, index) =>
-         <ConnectedNode node={child} indent={indent} key={`stmt-${index}`} />);
+         <ConnectedNode node={child} key={`stmt-${index}`} />);
 
-    return <div style={props.style}>{children}</div>;
+    const style = {
+        marginLeft: 40
+    };
+
+    return <div style={style}>{children}</div>;
 };
 
 const BlankStatement = () => {
@@ -384,9 +390,9 @@ const CallExpression = (props) => {
 const ForOfStatement = (props) => {
     const { node } = props;
 
-    const left = <ConnectedNode node={node.left}/>;
-    const right = <ConnectedNode node={node.right}/>;
-    const block = <ConnectedNode node={node.body} indent={'    '} />;
+    const left = <ConnectedNode node={node.left} />;
+    const right = <ConnectedNode node={node.right} />;
+    const block = <ConnectedNode node={node.body} />;
     const open = "{";
     const close = "}";
 

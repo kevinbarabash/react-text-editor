@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha --compilers js:babel/register test",
-    "start": "node server.js"
+    "start": "webpack -d -w"
   },
   "repository": {
     "type": "git",
@@ -26,9 +26,7 @@
     "expect.js": "^0.3.1",
     "jsdom": "^6.5.1",
     "mocha": "^2.2.5",
-    "react-hot-loader": "^1.2.9",
-    "webpack": "^1.11.0",
-    "webpack-dev-server": "^1.10.1"
+    "webpack": "^1.13.0"
   },
   "dependencies": {
     "gehry": "^0.2.1",
