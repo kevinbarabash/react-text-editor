@@ -34,7 +34,7 @@ class Identifier extends Component {
             const after = content.substring(selection.pos);
             content = [
                 <span key='before'>{before}</span>,
-                <Cursor key='cursor'/>,
+                <Cursor key='cursor' pos={selection.pos}/>,
                 <span key='after'>{after}</span>
             ];
         }
@@ -78,7 +78,7 @@ class NumberLiteral extends Component {
             const after = content.substring(selection.pos);
             content = [
                 <span key='before'>{before}</span>,
-                <Cursor key='cursor'/>,
+                <Cursor key='cursor' pos={selection.pos}/>,
                 <span key='after'>{after}</span>
             ];
         }
@@ -122,7 +122,7 @@ class StringLiteral extends Component {
             const after = content.substring(selection.pos);
             content = [
                 <span key='before'>{before}</span>,
-                <Cursor key='cursor'/>,
+                <Cursor key='cursor' pos={selection.pos}/>,
                 <span key='after'>{after}</span>
             ];
         }

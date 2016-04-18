@@ -4,6 +4,8 @@ import Node from './renderers';
 import Selection from './selection';
 import Gutter from './gutter';
 
+import store from './store';
+
 import HeadlessEditor from './HeadlessEditor';
 
 // TODO renamed to selectable nodes
@@ -61,14 +63,14 @@ class NodeEditor extends Component {
 
     handleKeyDown(e) {
         if (e.keyCode === 37) {
-            // TODO group cursorNode and cursorPosition together into a Cursor object
-            // which is separate from a CursorView
-            this.headlessEditor.back((cursorNode, cursorPosition, selectedNodes) => {
-                this.setState({ cursorNode, cursorPosition, selectedNodes });
+            store.dispatch({
+                type: 'KEY',
+                keyCode: 37
             });
         } else if (e.keyCode === 39) {
-            this.headlessEditor.forward((cursorNode, cursorPosition, selectedNodes) => {
-                this.setState({ cursorNode, cursorPosition, selectedNodes });
+            store.dispatch({
+                type: 'KEY',
+                keyCode: 39
             });
         } else if (e.keyCode === 8) {
             e.preventDefault();

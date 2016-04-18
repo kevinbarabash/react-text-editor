@@ -19,6 +19,13 @@ class Cursor extends Component {
         this.startBlinking();
     }
 
+    componentWillUpdate(nextProps, nextState) {
+        if (this.props.pos !== nextProps.pos) {
+            clearInterval(this.interval);
+            this.setState({ opacity: 1 });
+        }
+    }
+
     componentWillUnmount() {
         clearInterval(this.interval);
     }
