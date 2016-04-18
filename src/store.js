@@ -1,9 +1,44 @@
 import { createStore } from 'redux';
-import gehry from 'gehry';
 
 import prog from './prog';
 
-const nodes = gehry.deconstruct(prog);
+const deconstruct = function(root) {
+    if (root === null || root === undefined) {
+        return null;
+    }
+    var nodes = [];
+    var index = 0;
+    var traverse = function (obj, parent = -1) {
+        const id = index++;
+        const result = { parent };
+
+        Object.keys(obj).forEach(key => {
+            const val = obj[key];
+
+            if (val == null) {
+                result[key] = val;
+            } else if (typeof val === "object") {
+                if (Array.isArray(val)) {
+                    result[key] = val.map(item => traverse(item, id));
+                } else {
+                    result[key] = traverse(val, id);
+                }
+            } else if (typeof val === "function") {
+                result[key] = "[function]";
+            } else {
+                result[key] = val;
+            }
+        });
+
+        nodes[id] = result;
+        return id;
+    };
+
+    traverse(root);
+    return nodes;
+};
+
+const nodes = deconstruct(prog);
 
 const defaultState = {
     nodes: nodes,

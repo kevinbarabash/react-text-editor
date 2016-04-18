@@ -29,7 +29,6 @@
     "webpack": "^1.13.0"
   },
   "dependencies": {
-    "gehry": "^0.2.1",
     "react": "^15.0.1",
     "react-dom": "^15.0.1",
     "react-redux": "^4.4.2",

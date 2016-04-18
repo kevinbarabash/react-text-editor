@@ -134,7 +134,7 @@ class NodeEditor extends Component {
                     tabIndex={0}>
             {selections}
             <Gutter count={100} />
-            <Node node={node} />
+            <Node node={0} />
         </div>;
     }
 }

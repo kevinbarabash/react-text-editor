@@ -271,8 +271,7 @@ const ClassDeclaration = (props) =>{
 };
 
 const ClassBody = (props) => {
-    const nodes = store.getState().nodes;
-    const defs = nodes[props.node.body.id].map((def, index) => {
+    const defs = props.node.body.map((def, index) => {
         return <ConnectedNode node={def} key={`child-${index}`} />;
     });
 
@@ -283,11 +282,9 @@ const ClassBody = (props) => {
 };
 
 const MethodDefinition = (props) => {
-    const { indent, node: { key, value } } = props;
-
     return <div>
-        <ConnectedNode node={key} />
-        <ConnectedNode node={value} method={true} />
+        <ConnectedNode node={props.node.key} />
+        <ConnectedNode node={props.node.value} method={true} />
     </div>;
 };
 
@@ -300,8 +297,7 @@ const FunctionExpression = (props) => {
 
     const params = [];
 
-    const nodes = store.getState().nodes;
-    nodes[node.params.id].forEach((param, index) => {
+    node.params.forEach((param, index) => {
         if (index > 0) {
             params.push(", ");
         }
@@ -314,18 +310,15 @@ const FunctionExpression = (props) => {
 };
 
 const ReturnStatement = (props) => {
-    const { node } = props;
-
     return <div>
-        <ConnectedNode node={node['return']} />
+        <ConnectedNode node={props.node['return']} />
         {' '}
-        <ConnectedNode node={node.argument} />
+        <ConnectedNode node={props.node.argument} />
     </div>;
 };
 
 const VariableDeclaration = (props) => {
-    const nodes = store.getState().nodes;
-    const decls = nodes[props.node.declarations.id];
+    const decls = props.node.declarations;
 
     return <span>
         <ConnectedNode node={props.node.kind} />
@@ -335,16 +328,11 @@ const VariableDeclaration = (props) => {
 };
 
 const ExpressionStatement = (props) => {
-    const {  node: { expression } } = props;
-
-    return <div><ConnectedNode node={expression} />;</div>;
+    return <div><ConnectedNode node={props.node.expression} />;</div>;
 };
 
 const BlockStatement = (props) => {
-    const { node: { body } } = props;
-    const nodes = store.getState().nodes;
-
-    const children = nodes[body.id].map((child, index) =>
+    const children = props.node.body.map((child, index) =>
          <ConnectedNode node={child} key={`stmt-${index}`} />);
 
     const style = {
@@ -372,9 +360,8 @@ const AssignmentExpression = (props) => {
 
 const CallExpression = (props) => {
     const args = [];
-    const nodes = store.getState().nodes;
 
-    nodes[props.node.arguments.id].forEach((arg, index) => {
+    props.node.arguments.forEach((arg, index) => {
         if (index > 0) {
             args.push(", ");
         }
@@ -422,9 +409,8 @@ const BinaryExpression = (props) => {
 
 const ArrayExpression = (props) => {
     const elements = [];
-    const nodes = store.getState().nodes;
 
-    nodes[props.node.elements.id].forEach((element, index) => {
+    props.node.elements.forEach((element, index) => {
         if (index > 0) {
             elements.push(", ");
         }
@@ -446,9 +432,8 @@ const Program = (props) => {
     };
 
     const { body } = props.node;
-    const nodes = store.getState().nodes;
 
-    const children = nodes[body.id].map((child, index) =>
+    const children = body.map((child, index) =>
         <ConnectedNode node={child} key={`stmt-${index}`} />);
 
     return <div style={style}>{children}</div>;
@@ -486,16 +471,16 @@ const components = {
 };
 
 function mapStateToProps(state, ownProps) {
-    if (state.selection && state.selection.id === ownProps.node.id) {
+    if (state.selection && state.selection.id === ownProps.node) {
         return {
-            id: ownProps.node.id,
-            node: state.nodes[ownProps.node.id],
+            id: ownProps.node,
+            node: state.nodes[ownProps.node],
             selection: state.selection,
         };
     } else {
         return {
-            id: ownProps.node.id,
-            node: state.nodes[ownProps.node.id],
+            id: ownProps.node,
+            node: state.nodes[ownProps.node],
         };
     }
 }
