@@ -156,12 +156,39 @@ const reducer = function(state = defaultState, action) {
         case 'INSERT':
             if (selection && selection.id) {
                 const node = state.nodes[selection.id];
+                const parent = node.parent;
+
                 let pos = selection.pos;
 
                 if (node.type === 'StringLiteral') {
                     if (pos > 0 && pos < node.value.length + 2) {
                         const left = node.value.substring(0, pos - 1);
                         const right = node.value.substring(pos - 1);
+                        const value = left + action.char + right;
+                        pos += 1;
+
+                        return {
+                            ...state,
+                            nodes: {
+                                ...nodes,
+                                [selection.id]: {
+                                    ...node,
+                                    value,
+                                },
+                            },
+                            selection: {
+                                ...selection,
+                                pos: pos
+                            },
+                        };
+                    }
+                } else if (node.type === 'NumberLiteral') {
+                    if (/[0-9\.]/.test(action.char)) {
+                        if (action.char === '.' && node.value.includes('.')) {
+                            return state;
+                        }
+                        const left = node.value.substring(0, pos);
+                        const right = node.value.substring(pos);
                         const value = left + action.char + right;
                         pos += 1;
 
@@ -189,6 +216,23 @@ const reducer = function(state = defaultState, action) {
                                 [selection.id]: {
                                     type: 'StringLiteral',
                                     value: '',
+                                    parent,
+                                },
+                            },
+                            selection: {
+                                ...selection,
+                                pos: 1
+                            },
+                        };
+                    } else if (/[0-9\.]/.test(action.char)) {
+                        return {
+                            ...state,
+                            nodes: {
+                                ...nodes,
+                                [selection.id]: {
+                                    type: 'NumberLiteral',
+                                    value: action.char,
+                                    parent,
                                 },
                             },
                             selection: {
@@ -203,6 +247,7 @@ const reducer = function(state = defaultState, action) {
         case 'DELETE':
             if (selection && selection.id) {
                 const node = state.nodes[selection.id];
+                const parent = node.parent;
                 let pos = selection.pos;
 
                 if (node.type === 'StringLiteral') {
@@ -233,6 +278,7 @@ const reducer = function(state = defaultState, action) {
                                 ...nodes,
                                 [selection.id]: {
                                     type: 'Placeholder',
+                                    parent,
                                 },
                             },
                             selection: {
@@ -240,6 +286,45 @@ const reducer = function(state = defaultState, action) {
                                 pos: undefined,
                             },
                         };
+                    }
+                } else if (node.type === 'NumberLiteral') {
+                    if (pos > 0) {
+                        const left = node.value.substring(0, pos - 1);
+                        const right = node.value.substring(pos);
+                        const value = left + right;
+                        pos -= 1;
+
+                        if (value === '') {
+                            return {
+                                ...state,
+                                nodes: {
+                                    ...nodes,
+                                    [selection.id]: {
+                                        type: 'Placeholder',
+                                        parent,
+                                    },
+                                },
+                                selection: {
+                                    ...selection,
+                                    pos: undefined,
+                                },
+                            };
+                        } else {
+                            return {
+                                ...state,
+                                nodes: {
+                                    ...nodes,
+                                    [selection.id]: {
+                                        ...node,
+                                        value,
+                                    },
+                                },
+                                selection: {
+                                    ...selection,
+                                    pos: pos
+                                },
+                            };
+                        }
                     }
                 }
             }
