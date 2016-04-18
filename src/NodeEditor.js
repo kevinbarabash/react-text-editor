@@ -65,24 +65,27 @@ class NodeEditor extends Component {
         if (e.keyCode === 37) {
             store.dispatch({
                 type: 'KEY',
-                keyCode: 37
+                keyCode: 37,
             });
         } else if (e.keyCode === 39) {
             store.dispatch({
                 type: 'KEY',
-                keyCode: 39
+                keyCode: 39,
             });
         } else if (e.keyCode === 8) {
-            e.preventDefault();
+            store.dispatch({
+                type: 'DELETE',
+            });
         }
     }
 
     handleKeyPress(e) {
-        let char = String.fromCharCode(e.charCode);
-        console.log(char);
-        this.headlessEditor.insert(char, (cursorNode, cursorPosition, selectedNodes) => {
-            this.setState({ cursorNode, cursorPosition, selectedNodes });
+        store.dispatch({
+            type: 'INSERT',
+            char: String.fromCharCode(e.charCode),
         });
+
+        e.preventDefault();
     }
 
     componentWillMount() {
