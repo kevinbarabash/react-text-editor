@@ -24,7 +24,7 @@ const getValue = function(node) {
 };
 
 const reducer = function(state = defaultState, action) {
-    const { selection } = state;
+    const { selection, nodes } = state;
 
     switch(action.type) {
         case 'KEY':
@@ -72,8 +72,25 @@ const reducer = function(state = defaultState, action) {
                             selection: {
                                 ...selection,
                                 pos: pos
-                            }
-                        }
+                            },
+                        };
+                    }
+                } else if (node.type === 'Placeholder') {
+                    if (action.char === '"') {
+                        return {
+                            ...state,
+                            nodes: {
+                                ...nodes,
+                                [selection.id]: {
+                                    type: 'StringLiteral',
+                                    value: '',
+                                },
+                            },
+                            selection: {
+                                ...selection,
+                                pos: 1
+                            },
+                        };
                     }
                 }
             }
@@ -102,8 +119,22 @@ const reducer = function(state = defaultState, action) {
                             selection: {
                                 ...selection,
                                 pos: pos
-                            }
-                        }
+                            },
+                        };
+                    } else if (node.value.length === 0) {
+                        return {
+                            ...state,
+                            nodes: {
+                                ...nodes,
+                                [selection.id]: {
+                                    type: 'Placeholder',
+                                },
+                            },
+                            selection: {
+                                ...selection,
+                                pos: undefined,
+                            },
+                        };
                     }
                 }
             }
