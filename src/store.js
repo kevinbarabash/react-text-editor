@@ -65,20 +65,46 @@ const reducer = function(state = defaultState, action) {
         case 'KEY':
             if (selection && selection.pos != null) {
                 let pos = selection.pos;
+                let id = selection.id;
+
                 const node = state.nodes[selection.id];
                 const value = getValue(node);
 
                 if (action.keyCode === LEFT_KEY) {
-                    pos = Math.max(0, pos - 1);
+                    if (pos === 0) {
+                        const parent = state.nodes[node.parent];
+                        if (parent.type === 'CallExpression') {
+                            let index = parent.arguments.indexOf(id);
+                            if (index !== -1) {
+                                index = Math.max(0, index - 1);
+                                id = parent.arguments[index];
+                                pos = getValue(nodes[id]).length;
+                            }
+                        }
+                    } else {
+                        pos = pos - 1;
+                    }
                 } else if (action.keyCode === RIGHT_KEY) {
-                    pos = Math.min(value.length, pos + 1);
+                    if (pos === value.length) {
+                        const parent = state.nodes[node.parent];
+                        if (parent.type === 'CallExpression') {
+                            let index = parent.arguments.indexOf(id);
+                            if (index !== -1) {
+                                index = Math.max(0, index + 1);
+                                id = parent.arguments[index];
+                                pos = 0;
+                            }
+                        }
+                    } else {
+                        pos = pos + 1;
+                    }
                 }
 
                 return {
                     ...state,
                     selection: {
-                        ...selection,
-                        pos: pos,
+                        id,
+                        pos,
                     },
                 };
             }
