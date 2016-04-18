@@ -63,19 +63,11 @@ class NodeEditor extends Component {
 
     handleKeyDown(e) {
         if (e.keyCode === 37) {
-            store.dispatch({
-                type: 'KEY',
-                keyCode: 37,
-            });
+            store.dispatch({ type: 'MOVE_LEFT' });
         } else if (e.keyCode === 39) {
-            store.dispatch({
-                type: 'KEY',
-                keyCode: 39,
-            });
+            store.dispatch({ type: 'MOVE_RIGHT' });
         } else if (e.keyCode === 8) {
-            store.dispatch({
-                type: 'DELETE',
-            });
+            store.dispatch({ type: 'DELETE' });
         }
     }
 

@@ -45,9 +45,6 @@ const defaultState = {
     selection: null,
 };
 
-const LEFT_KEY = 37;
-const RIGHT_KEY = 39;
-
 const getValue = function(node) {
     if (node.type === 'NumberLiteral') {
         return node.value;
@@ -62,42 +59,39 @@ const reducer = function(state = defaultState, action) {
     const { selection, nodes } = state;
 
     switch(action.type) {
-        case 'KEY':
+        case 'MOVE_LEFT':
             if (selection && selection.pos != null) {
                 let pos = selection.pos;
                 let id = selection.id;
 
                 const node = state.nodes[selection.id];
-                const value = getValue(node);
 
-                if (action.keyCode === LEFT_KEY) {
-                    if (pos === 0) {
-                        const parent = state.nodes[node.parent];
-                        if (parent.type === 'CallExpression') {
-                            let index = parent.arguments.indexOf(id);
-                            if (index !== -1) {
-                                index = Math.max(0, index - 1);
-                                id = parent.arguments[index];
-                                pos = getValue(nodes[id]).length;
-                            }
+                if (pos === 0) {
+                    const parent = state.nodes[node.parent];
+                    if (parent.type === 'CallExpression') {
+                        let index = parent.arguments.indexOf(id);
+                        if (index > 0) {
+                            index = Math.max(0, index - 1);
+                            id = parent.arguments[index];
+                            pos = getValue(nodes[id]).length;
                         }
-                    } else {
-                        pos = pos - 1;
-                    }
-                } else if (action.keyCode === RIGHT_KEY) {
-                    if (pos === value.length) {
-                        const parent = state.nodes[node.parent];
-                        if (parent.type === 'CallExpression') {
-                            let index = parent.arguments.indexOf(id);
-                            if (index !== -1) {
-                                index = Math.max(0, index + 1);
-                                id = parent.arguments[index];
-                                pos = 0;
-                            }
+                    } else if (parent.type === 'ArrayExpression') {
+                        let index = parent.elements.indexOf(id);
+                        if (index > 0) {
+                            index = Math.max(0, index - 1);
+                            id = parent.elements[index];
+                            pos = getValue(nodes[id]).length;
                         }
-                    } else {
-                        pos = pos + 1;
+                    } else if (parent.type === 'FunctionExpression') {
+                        let index = parent.params.indexOf(id);
+                        if (index > 0) {
+                            index = Math.max(0, index - 1);
+                            id = parent.params[index];
+                            pos = getValue(nodes[id]).length;
+                        }
                     }
+                } else {
+                    pos = pos - 1;
                 }
 
                 return {
@@ -108,6 +102,56 @@ const reducer = function(state = defaultState, action) {
                     },
                 };
             }
+
+            return state;
+        case 'MOVE_RIGHT':
+            if (selection && selection.pos != null) {
+                let pos = selection.pos;
+                let id = selection.id;
+
+                const node = state.nodes[selection.id];
+                const value = getValue(node);
+
+                if (pos === value.length) {
+                    const parent = state.nodes[node.parent];
+                    if (parent.type === 'CallExpression') {
+                        const count = parent.arguments.length;
+                        let index = parent.arguments.indexOf(id);
+                        if (index !== -1 && index + 1 < count) {
+                            index = index + 1;
+                            id = parent.arguments[index];
+                            pos = 0;
+                        }
+                    } else if (parent.type === 'ArrayExpression') {
+                        const count = parent.elements.length;
+                        let index = parent.elements.indexOf(id);
+                        if (index !== -1 && index + 1 < count) {
+                            index = index + 1;
+                            id = parent.elements[index];
+                            pos = 0;
+                        }
+                    } else if (parent.type === 'FunctionExpression') {
+                        const count = parent.params.length;
+                        let index = parent.params.indexOf(id);
+                        if (index !== -1 && index + 1 < count ) {
+                            index = index + 1;
+                            id = parent.params[index];
+                            pos = 0;
+                        }
+                    }
+                } else {
+                    pos = pos + 1;
+                }
+
+                return {
+                    ...state,
+                    selection: {
+                        id,
+                        pos,
+                    },
+                };
+            }
+
             return state;
         case 'INSERT':
             if (selection && selection.id) {
