@@ -474,13 +474,13 @@ function mapStateToProps(state, ownProps) {
     if (state.selection && state.selection.id === ownProps.node) {
         return {
             id: ownProps.node,
-            node: state.nodes[ownProps.node],
+            node: state.nodes.get(ownProps.node),
             selection: state.selection,
         };
     } else {
         return {
             id: ownProps.node,
-            node: state.nodes[ownProps.node],
+            node: state.nodes.get(ownProps.node),
         };
     }
 }

@@ -5,7 +5,7 @@ module.exports = {
     devtool: '#eval-source-map',
     entry: {
         app: './src/index',
-        deps: ['react', 'react-dom', 'redux', 'react-redux']
+        deps: ['react', 'react-dom', 'redux', 'react-redux', 'immutable']
     },
     output: {
         path: path.join(__dirname, 'build'),

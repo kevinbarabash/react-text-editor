@@ -1,12 +1,15 @@
+import Immutable from 'immutable';
 import { createStore } from 'redux';
 
 import prog from './prog';
+
+window.Immutable = Immutable;
 
 const deconstruct = function(root) {
     if (root === null || root === undefined) {
         return null;
     }
-    var nodes = [];
+    var nodes = Immutable.Map();
     var index = 0;
     var traverse = function (obj, parent = -1) {
         const id = index++;
@@ -30,7 +33,7 @@ const deconstruct = function(root) {
             }
         });
 
-        nodes[id] = result;
+        nodes = nodes.set(id, result);
         return id;
     };
 
@@ -64,30 +67,30 @@ const reducer = function(state = defaultState, action) {
                 let pos = selection.pos;
                 let id = selection.id;
 
-                const node = state.nodes[selection.id];
+                const node = state.nodes.get(selection.id);
 
                 if (pos === 0) {
-                    const parent = state.nodes[node.parent];
+                    const parent = state.nodes.get(node.parent);
                     if (parent.type === 'CallExpression') {
                         let index = parent.arguments.indexOf(id);
                         if (index > 0) {
                             index = Math.max(0, index - 1);
                             id = parent.arguments[index];
-                            pos = getValue(nodes[id]).length;
+                            pos = getValue(nodes.get(id)).length;
                         }
                     } else if (parent.type === 'ArrayExpression') {
                         let index = parent.elements.indexOf(id);
                         if (index > 0) {
                             index = Math.max(0, index - 1);
                             id = parent.elements[index];
-                            pos = getValue(nodes[id]).length;
+                            pos = getValue(nodes.get(id)).length;
                         }
                     } else if (parent.type === 'FunctionExpression') {
                         let index = parent.params.indexOf(id);
                         if (index > 0) {
                             index = Math.max(0, index - 1);
                             id = parent.params[index];
-                            pos = getValue(nodes[id]).length;
+                            pos = getValue(nodes.get(id)).length;
                         }
                     }
                 } else {
@@ -109,11 +112,11 @@ const reducer = function(state = defaultState, action) {
                 let pos = selection.pos;
                 let id = selection.id;
 
-                const node = state.nodes[selection.id];
+                const node = state.nodes.get(selection.id);
                 const value = getValue(node);
 
                 if (pos === value.length) {
-                    const parent = state.nodes[node.parent];
+                    const parent = state.nodes.get(node.parent);
                     if (parent.type === 'CallExpression') {
                         const count = parent.arguments.length;
                         let index = parent.arguments.indexOf(id);
@@ -155,7 +158,7 @@ const reducer = function(state = defaultState, action) {
             return state;
         case 'INSERT':
             if (selection && selection.id) {
-                const node = state.nodes[selection.id];
+                const node = state.nodes.get(selection.id);
                 const parent = node.parent;
 
                 let pos = selection.pos;
@@ -169,13 +172,7 @@ const reducer = function(state = defaultState, action) {
 
                         return {
                             ...state,
-                            nodes: {
-                                ...nodes,
-                                [selection.id]: {
-                                    ...node,
-                                    value,
-                                },
-                            },
+                            nodes: nodes.set(selection.id, { ...node, value }),
                             selection: {
                                 ...selection,
                                 pos: pos
@@ -194,13 +191,7 @@ const reducer = function(state = defaultState, action) {
 
                         return {
                             ...state,
-                            nodes: {
-                                ...nodes,
-                                [selection.id]: {
-                                    ...node,
-                                    value,
-                                },
-                            },
+                            nodes: nodes.set(selection.id, { ...node, value }),
                             selection: {
                                 ...selection,
                                 pos: pos
@@ -211,14 +202,11 @@ const reducer = function(state = defaultState, action) {
                     if (action.char === '"') {
                         return {
                             ...state,
-                            nodes: {
-                                ...nodes,
-                                [selection.id]: {
-                                    type: 'StringLiteral',
-                                    value: '',
-                                    parent,
-                                },
-                            },
+                            nodes: nodes.set(selection.id, {
+                                type: 'StringLiteral',
+                                value: '',
+                                parent,
+                            }),
                             selection: {
                                 ...selection,
                                 pos: 1
@@ -227,14 +215,11 @@ const reducer = function(state = defaultState, action) {
                     } else if (/[0-9\.]/.test(action.char)) {
                         return {
                             ...state,
-                            nodes: {
-                                ...nodes,
-                                [selection.id]: {
-                                    type: 'NumberLiteral',
-                                    value: action.char,
-                                    parent,
-                                },
-                            },
+                            nodes: nodes.set(selection.id, {
+                                type: 'NumberLiteral',
+                                value: action.char,
+                                parent,
+                            }),
                             selection: {
                                 ...selection,
                                 pos: 1
@@ -246,7 +231,7 @@ const reducer = function(state = defaultState, action) {
             return state;
         case 'DELETE':
             if (selection && selection.id) {
-                const node = state.nodes[selection.id];
+                const node = state.nodes.get(selection.id);
                 const parent = node.parent;
                 let pos = selection.pos;
 
@@ -259,13 +244,7 @@ const reducer = function(state = defaultState, action) {
 
                         return {
                             ...state,
-                            nodes: {
-                                ...nodes,
-                                [selection.id]: {
-                                    ...node,
-                                    value,
-                                },
-                            },
+                            nodes: nodes.set(selection.id, { ...node, value }),
                             selection: {
                                 ...selection,
                                 pos: pos
@@ -274,13 +253,7 @@ const reducer = function(state = defaultState, action) {
                     } else if (node.value.length === 0) {
                         return {
                             ...state,
-                            nodes: {
-                                ...nodes,
-                                [selection.id]: {
-                                    type: 'Placeholder',
-                                    parent,
-                                },
-                            },
+                            nodes: nodes.set(selection.id, { type: 'Placeholder', parent }),
                             selection: {
                                 ...selection,
                                 pos: undefined,
@@ -297,13 +270,7 @@ const reducer = function(state = defaultState, action) {
                         if (value === '') {
                             return {
                                 ...state,
-                                nodes: {
-                                    ...nodes,
-                                    [selection.id]: {
-                                        type: 'Placeholder',
-                                        parent,
-                                    },
-                                },
+                                nodes: nodes.set(selection.id, { type: 'Placeholder', parent }),
                                 selection: {
                                     ...selection,
                                     pos: undefined,
@@ -312,13 +279,7 @@ const reducer = function(state = defaultState, action) {
                         } else {
                             return {
                                 ...state,
-                                nodes: {
-                                    ...nodes,
-                                    [selection.id]: {
-                                        ...node,
-                                        value,
-                                    },
-                                },
+                                nodes: nodes.set(selection.id, { ...node, value }),
                                 selection: {
                                     ...selection,
                                     pos: pos
@@ -327,7 +288,7 @@ const reducer = function(state = defaultState, action) {
                         }
                     }
                 } else if (node.type === 'Placeholder') {
-                    const parentNode = nodes[parent];
+                    const parentNode = nodes.get(parent);
 
                     if (parentNode.type === 'CallExpression' && parentNode.arguments.includes(selection.id)) {
                         const args = parentNode.arguments;
@@ -335,16 +296,13 @@ const reducer = function(state = defaultState, action) {
 
                         return {
                             ...state,
-                            nodes: {
-                                ...nodes,
-                                [parent]: {
-                                    ...parentNode,
-                                    arguments: args.filter(arg => arg !== selection.id),
-                                }
-                            },
+                            nodes: nodes.set(parent, {
+                                ...parentNode,
+                                arguments: args.filter(arg => arg !== selection.id)
+                            }),
                             selection: {
                                 id: prevArg,
-                                pos: getValue(nodes[prevArg]).length,
+                                pos: getValue(nodes.get(prevArg)).length,
                             },
                         };
                     }
