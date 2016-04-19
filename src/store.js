@@ -5,14 +5,15 @@ import prog from './prog';
 
 window.Immutable = Immutable;
 
+let __id = 0;
+
 const deconstruct = function(root) {
     if (root === null || root === undefined) {
         return null;
     }
     var nodes = Immutable.Map();
-    var index = 0;
     var traverse = function (obj, parent = -1) {
-        const id = index++;
+        const id = __id++;
         const result = { parent };
 
         Object.keys(obj).forEach(key => {
@@ -58,38 +59,36 @@ const getValue = function(node) {
     }
 };
 
+const listLookup = {
+    'CallExpression': 'arguments',
+    'ArrayExpression': 'elements',
+    'FunctionExpression': 'params',
+};
+
+// TODO: move navigation code into a separate reducer
+// TODO: cursorIsOnLeftEdge, cursorIsOnRightEdget
+// TODO: getPreviousNode, getNextNode
+
 const reducer = function(state = defaultState, action) {
     const { selection, nodes } = state;
+    let node, id;
 
     switch(action.type) {
         case 'MOVE_LEFT':
+            node = state.nodes.get(selection.id);
+            id = selection.id;
+
             if (selection && selection.pos != null) {
                 let pos = selection.pos;
-                let id = selection.id;
-
-                const node = state.nodes.get(selection.id);
 
                 if (pos === 0) {
                     const parent = state.nodes.get(node.parent);
-                    if (parent.type === 'CallExpression') {
-                        let index = parent.arguments.indexOf(id);
+                    if (Object.keys(listLookup).includes(parent.type)) {
+                        const list = parent[listLookup[parent.type]];
+                        let index = list.indexOf(id);
                         if (index > 0) {
                             index = Math.max(0, index - 1);
-                            id = parent.arguments[index];
-                            pos = getValue(nodes.get(id)).length;
-                        }
-                    } else if (parent.type === 'ArrayExpression') {
-                        let index = parent.elements.indexOf(id);
-                        if (index > 0) {
-                            index = Math.max(0, index - 1);
-                            id = parent.elements[index];
-                            pos = getValue(nodes.get(id)).length;
-                        }
-                    } else if (parent.type === 'FunctionExpression') {
-                        let index = parent.params.indexOf(id);
-                        if (index > 0) {
-                            index = Math.max(0, index - 1);
-                            id = parent.params[index];
+                            id = list[index];
                             pos = getValue(nodes.get(id)).length;
                         }
                     }
@@ -99,46 +98,55 @@ const reducer = function(state = defaultState, action) {
 
                 return {
                     ...state,
-                    selection: {
-                        id,
-                        pos,
-                    },
+                    selection: { id, pos },
                 };
+            } else if (node.type === 'Placeholder') {
+                const parent = state.nodes.get(node.parent);
+                if (Object.keys(listLookup).includes(parent.type)) {
+                    const list = parent[listLookup[parent.type]];
+                    let index = list.indexOf(id);
+                    if (index > 0) {
+                        index = Math.max(0, index - 1);
+                        id = list[index];
+                        const prevNode = nodes.get(id);
+
+                        if (prevNode.type === 'Placeholder') {
+                            return {
+                                ...state,
+                                selection: { id },
+                            };
+                        } else {
+                            return {
+                                ...state,
+                                selection: {
+                                    id,
+                                    pos: getValue(prevNode).length,
+                                },
+                            };
+                        }
+                    }
+                }
             }
 
             return state;
         case 'MOVE_RIGHT':
+            node = state.nodes.get(selection.id);
+            id = selection.id;
+
             if (selection && selection.pos != null) {
                 let pos = selection.pos;
-                let id = selection.id;
 
-                const node = state.nodes.get(selection.id);
                 const value = getValue(node);
 
                 if (pos === value.length) {
                     const parent = state.nodes.get(node.parent);
-                    if (parent.type === 'CallExpression') {
-                        const count = parent.arguments.length;
-                        let index = parent.arguments.indexOf(id);
+                    if (Object.keys(listLookup).includes(parent.type)) {
+                        const list = parent[listLookup[parent.type]];
+                        const count = list.length;
+                        let index = list.indexOf(id);
                         if (index !== -1 && index + 1 < count) {
                             index = index + 1;
-                            id = parent.arguments[index];
-                            pos = 0;
-                        }
-                    } else if (parent.type === 'ArrayExpression') {
-                        const count = parent.elements.length;
-                        let index = parent.elements.indexOf(id);
-                        if (index !== -1 && index + 1 < count) {
-                            index = index + 1;
-                            id = parent.elements[index];
-                            pos = 0;
-                        }
-                    } else if (parent.type === 'FunctionExpression') {
-                        const count = parent.params.length;
-                        let index = parent.params.indexOf(id);
-                        if (index !== -1 && index + 1 < count ) {
-                            index = index + 1;
-                            id = parent.params[index];
+                            id = list[index];
                             pos = 0;
                         }
                     }
@@ -153,6 +161,33 @@ const reducer = function(state = defaultState, action) {
                         pos,
                     },
                 };
+            } else if (node.type === 'Placeholder') {
+                const parent = state.nodes.get(node.parent);
+                if (Object.keys(listLookup).includes(parent.type)) {
+                    const list = parent[listLookup[parent.type]];
+                    const count = list.length;
+                    let index = list.indexOf(id);
+                    if (index !== -1 && index + 1 < count) {
+                        index = index + 1;
+                        id = list[index];
+                        const nextNode = nodes.get(id);
+
+                        if (nextNode.type === 'Placeholder') {
+                            return {
+                                ...state,
+                                selection: { id },
+                            };
+                        } else {
+                            return {
+                                ...state,
+                                selection: {
+                                    id,
+                                    pos: 0,
+                                },
+                            };
+                        }
+                    }
+                }
             }
 
             return state;
@@ -160,8 +195,30 @@ const reducer = function(state = defaultState, action) {
             if (selection && selection.id) {
                 const node = state.nodes.get(selection.id);
                 const parent = node.parent;
+                const parentNode = state.nodes.get(node.parent);
 
                 let pos = selection.pos;
+
+                if (parentNode.type === 'CallExpression' && parentNode.arguments.includes(selection.id) &&
+                        (node.type === 'Placeholder' || pos === getValue(node).length) && action.char === ',') {
+                    const index = parentNode.arguments.indexOf(selection.id);
+                    const newId = __id++;
+                    const args = [...parentNode.arguments];
+                    args.splice(index + 1, 0, newId);
+                    return {
+                        ...state,
+                        nodes: nodes.set(parent, {
+                            ...parentNode,
+                            arguments: args,
+                        }).set(newId, {
+                            type: 'Placeholder',
+                            parent: parent,
+                        }),
+                        selection: {
+                            id: newId,
+                        },
+                    };
+                }
 
                 if (node.type === 'StringLiteral') {
                     if (pos > 0 && pos < node.value.length + 2) {
