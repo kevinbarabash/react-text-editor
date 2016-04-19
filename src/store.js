@@ -326,6 +326,28 @@ const reducer = function(state = defaultState, action) {
                             };
                         }
                     }
+                } else if (node.type === 'Placeholder') {
+                    const parentNode = nodes[parent];
+
+                    if (parentNode.type === 'CallExpression' && parentNode.arguments.includes(selection.id)) {
+                        const args = parentNode.arguments;
+                        const prevArg = args[args.indexOf(selection.id) - 1];
+
+                        return {
+                            ...state,
+                            nodes: {
+                                ...nodes,
+                                [parent]: {
+                                    ...parentNode,
+                                    arguments: args.filter(arg => arg !== selection.id),
+                                }
+                            },
+                            selection: {
+                                id: prevArg,
+                                pos: getValue(nodes[prevArg]).length,
+                            },
+                        };
+                    }
                 }
             }
             return state;
