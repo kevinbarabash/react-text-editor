@@ -4,25 +4,7 @@ import Node from './renderers';
 import Selection from './selection';
 import Gutter from './gutter';
 
-import store from './store';
-
-import HeadlessEditor from './HeadlessEditor';
-
-// TODO renamed to selectable nodes
-let leafNodeTypes = [
-    "NumberLiteral",
-    "Identifier",
-    "StringLiteral",
-    "Placeholder",
-    "CallExpression",
-    "ThisExpression",
-    "BlankStatement",
-    "BinaryExpression",
-    "AssignmentExpression",
-    "ReturnStatement",
-    "Operator",
-    "Keyword"
-];
+import store from '../store';
 
 class NodeEditor extends Component {
     constructor(props) {
@@ -42,8 +24,6 @@ class NodeEditor extends Component {
             selectedNodes: [],
             cursorNode: null
         };
-
-        this.headlessEditor = new HeadlessEditor(props.node);
 
         // TODO: store scrollTop as part of state to maintain scrollTop position
     }

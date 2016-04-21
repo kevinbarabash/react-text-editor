@@ -1,7 +1,7 @@
 import Immutable from 'immutable';
 import { createStore } from 'redux';
 
-import prog from './prog';
+import prog from './data/prog';
 
 window.Immutable = Immutable;
 

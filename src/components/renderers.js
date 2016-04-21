@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 
 import Cursor from './Cursor';
-import store from './store';
+import store from '../store';
 
 /*** Stateful leaf nodes ***/
 
