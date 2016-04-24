@@ -1,4 +1,4 @@
-import { getValue } from './node_tools';
+import { getValue, getNextNode } from './node_tools';
 
 const listLookup = {
     'CallExpression': 'arguments',
@@ -76,17 +76,21 @@ export default (state, action) => {
                 const value = getValue(node);
 
                 if (pos === value.length) {
-                    const parent = state.nodes.get(node.parent);
-                    if (Object.keys(listLookup).includes(parent.type)) {
-                        const list = parent[listLookup[parent.type]];
-                        const count = list.length;
-                        let index = list.indexOf(id);
-                        if (index !== -1 && index + 1 < count) {
-                            index = index + 1;
-                            id = list[index];
-                            pos = 0;
-                        }
-                    }
+                    id = getNextNode(selection.id);
+                    console.log(state.nodes.get(id));
+                    pos = 0;
+
+                    // const parent = state.nodes.get(node.parent);
+                    // if (Object.keys(listLookup).includes(parent.type)) {
+                    //     const list = parent[listLookup[parent.type]];
+                    //     const count = list.length;
+                    //     let index = list.indexOf(id);
+                    //     if (index !== -1 && index + 1 < count) {
+                    //         index = index + 1;
+                    //         id = list[index];
+                    //         pos = 0;
+                    //     }
+                    // }
                 } else {
                     pos = pos + 1;
                 }
