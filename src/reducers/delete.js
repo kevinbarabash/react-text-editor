@@ -60,6 +60,33 @@ export default (state, action) => {
                     };
                 }
             }
+        } else if (node.type === 'Identifier') {
+            if (pos > 0) {
+                const left = node.name.substring(0, pos - 1);
+                const right = node.name.substring(pos);
+                const name = left + right;
+                pos -= 1;
+
+                if (name === '') {
+                    return {
+                        ...state,
+                        nodes: nodes.set(selection.id, { type: 'Placeholder' }),
+                        selection: {
+                            ...selection,
+                            pos: undefined,
+                        },
+                    };
+                } else {
+                    return {
+                        ...state,
+                        nodes: nodes.set(selection.id, { ...node, name }),
+                        selection: {
+                            ...selection,
+                            pos: pos
+                        },
+                    };
+                }
+            }
         } else if (node.type === 'Placeholder') {
             const parentNode = nodes.get(parent);
 

@@ -496,10 +496,7 @@ const Node = (props) => {
         return <span>{contents}</span>;
     } else {
         const Element = components[node.type];
-
-        return Element
-            ? <Element { ...props }/>
-            : <span>{node.type}</span>;
+        return Element ? <Element { ...props } /> : <span>{node.type}</span>;
     }
 };
 

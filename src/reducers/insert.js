@@ -62,13 +62,34 @@ export default (state, action) => {
 
                 return {
                     ...state,
-                    nodes: nodes.set(selection.id, { ...node, value }),
+                    nodes: nodes.set(selection.id, {...node, value}),
                     selection: {
                         ...selection,
                         pos: pos
                     },
                 };
             }
+        } else if (node.type === 'Identifier') {
+            if (/[0-9a-zA-Z$_]/.test(action.char)) {
+                if (/[0-9]/.test(action.char) && pos === 0) {
+                    return state;
+                }
+
+                const left = node.name.substring(0, pos);
+                const right = node.name.substring(pos);
+                const name = left + action.char + right;
+                pos += 1;
+
+                return {
+                    ...state,
+                    nodes: nodes.set(selection.id, {...node, name}),
+                    selection: {
+                        ...selection,
+                        pos: pos
+                    },
+                };
+            }
+
         } else if (node.type === 'Placeholder') {
             if (action.char === '"') {
                 return {
@@ -94,6 +115,18 @@ export default (state, action) => {
                         pos: 1
                     },
                 };
+            } else if (/[a-zA-Z$_]/.test(action.char)) {
+                return {
+                    ...state,
+                    nodes: nodes.set(selection.id, {
+                        type: 'Identifier',
+                        name: action.char,
+                    }),
+                    selection: {
+                        ...selection,
+                        pos: 1
+                    },
+                }
             }
             // TODO: handle unary operator and starting a negative number
         }
