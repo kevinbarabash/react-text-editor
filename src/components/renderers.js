@@ -315,16 +315,7 @@ const FunctionExpression = (props) => {
     const open = "{";
     const close = "}";
     const body = <ConnectedNode node={node.body} />;
-
-    const params = [];
-    const state = store.getState();
-
-    state.nodes.get(node.params).forEach((param, index) => {
-        if (index > 0) {
-            params.push(", ");
-        }
-        params.push(<ConnectedNode node={param} key={`param-${index}`} />);
-    });
+    const params = <ConnectedNode node={node.params} />;
 
     return method
         ? <span>({params}) {open}<div>{body}</div>{close}</span>
@@ -384,19 +375,9 @@ const AssignmentExpression = (props) => {
 };
 
 const CallExpression = (props) => {
-    const args = [];
-    const state = store.getState();
-
-    state.nodes.get(props.node.arguments).forEach((arg, index) => {
-        if (index > 0) {
-            args.push(", ");
-        }
-        args.push(<ConnectedNode node={arg} key={`arg-${index}`}/>);
-    });
-
     return <span>
         <ConnectedNode node={props.node.callee} />
-        ({args})
+        (<ConnectedNode node={props.node.arguments} />)
     </span>;
 };
 
@@ -434,17 +415,7 @@ const BinaryExpression = (props) => {
 };
 
 const ArrayExpression = (props) => {
-    const elements = [];
-    const state = store.getState();
-
-    state.nodes.get(props.node.elements).forEach((element, index) => {
-        if (index > 0) {
-            elements.push(", ");
-        }
-        elements.push(<ConnectedNode node={element} key={`item-${index}`} />);
-    });
-
-    return <span>[{elements}]</span>;
+    return <span>[<ConnectedNode node={props.node.elements} />]</span>;
 };
 
 const Parentheses = (props) => {
@@ -514,11 +485,22 @@ function mapStateToProps(state, ownProps) {
 
 const Node = (props) => {
     const node = props.node;
-    const Element = components[node.type];
 
-    return Element
-        ? <Element { ...props }/>
-        : <span>{node.type}</span>;
+    if (Array.isArray(node)) {
+        const contents = [];
+        node.forEach((item, index) => {
+            if (index > 0) contents.push(", ");
+            contents.push(<ConnectedNode node={item} key={`item-${index}`}/>);
+        });
+
+        return <span>{contents}</span>;
+    } else {
+        const Element = components[node.type];
+
+        return Element
+            ? <Element { ...props }/>
+            : <span>{node.type}</span>;
+    }
 };
 
 const ConnectedNode = connect(mapStateToProps)(Node);

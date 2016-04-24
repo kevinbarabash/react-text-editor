@@ -1,12 +1,12 @@
 import { getValue, generateId } from './node_tools';
 
 export default (state, action) => {
-    const { selection, nodes } = state;
+    const { selection, nodes, parents } = state;
 
     if (selection && selection.id) {
-        const node = state.nodes.get(selection.id);
-        const parent = node.parent;
-        const parentNode = state.nodes.get(node.parent);
+        const node = nodes.get(selection.id);
+        const parent = parents.get(selection.id);
+        const parentNode = nodes.get(parent);
 
         let pos = selection.pos;
 
@@ -23,8 +23,8 @@ export default (state, action) => {
                     arguments: args,
                 }).set(newId, {
                     type: 'Placeholder',
-                    parent: parent,
                 }),
+                parents: parents.set(newId, parent),
                 selection: {
                     id: newId,
                 },
@@ -48,8 +48,11 @@ export default (state, action) => {
                 };
             }
         } else if (node.type === 'NumberLiteral') {
-            if (/[0-9\.]/.test(action.char)) {
+            if (/[0-9\.\-]/.test(action.char)) {
                 if (action.char === '.' && node.value.includes('.')) {
+                    return state;
+                }
+                if (action.char === '-' && (node.value.startsWith('-') || pos !== 0)) {
                     return state;
                 }
                 const left = node.value.substring(0, pos);
@@ -73,7 +76,6 @@ export default (state, action) => {
                     nodes: nodes.set(selection.id, {
                         type: 'StringLiteral',
                         value: '',
-                        parent,
                     }),
                     selection: {
                         ...selection,
@@ -86,7 +88,6 @@ export default (state, action) => {
                     nodes: nodes.set(selection.id, {
                         type: 'NumberLiteral',
                         value: action.char,
-                        parent,
                     }),
                     selection: {
                         ...selection,
@@ -94,6 +95,7 @@ export default (state, action) => {
                     },
                 };
             }
+            // TODO: handle unary operator and starting a negative number
         }
     }
     return state;

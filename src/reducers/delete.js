@@ -1,11 +1,11 @@
 import { getValue } from './node_tools';
 
 export default (state, action) => {
-    const { selection, nodes } = state;
+    const { selection, nodes, parents } = state;
 
     if (selection && selection.id) {
-        const node = state.nodes.get(selection.id);
-        const parent = node.parent;
+        const node = nodes.get(selection.id);
+        const parent = parents.get(selection.id);
         let pos = selection.pos;
 
         if (node.type === 'StringLiteral') {
@@ -26,7 +26,7 @@ export default (state, action) => {
             } else if (node.value.length === 0) {
                 return {
                     ...state,
-                    nodes: nodes.set(selection.id, { type: 'Placeholder', parent }),
+                    nodes: nodes.set(selection.id, { type: 'Placeholder' }),
                     selection: {
                         ...selection,
                         pos: undefined,
@@ -43,7 +43,7 @@ export default (state, action) => {
                 if (value === '') {
                     return {
                         ...state,
-                        nodes: nodes.set(selection.id, { type: 'Placeholder', parent }),
+                        nodes: nodes.set(selection.id, { type: 'Placeholder' }),
                         selection: {
                             ...selection,
                             pos: undefined,
@@ -63,21 +63,24 @@ export default (state, action) => {
         } else if (node.type === 'Placeholder') {
             const parentNode = nodes.get(parent);
 
-            if (parentNode.type === 'CallExpression' && parentNode.arguments.includes(selection.id)) {
-                const args = parentNode.arguments;
-                const prevArg = args[args.indexOf(selection.id) - 1];
+            if (Array.isArray(parentNode)) {
+                const index = parentNode.indexOf(selection.id);
+                if (index > 0) {
+                    const prev = parentNode[index - 1];
+                    const value = getValue(nodes.get(prev));
 
-                return {
-                    ...state,
-                    nodes: nodes.set(parent, {
-                        ...parentNode,
-                        arguments: args.filter(arg => arg !== selection.id)
-                    }),
-                    selection: {
-                        id: prevArg,
-                        pos: getValue(nodes.get(prevArg)).length,
-                    },
-                };
+                    return {
+                        ...state,
+                        nodes: nodes.set(
+                            parent,
+                            parentNode.filter(id => id !== selection.id)
+                        ),
+                        selection: {
+                            id: prev,
+                            pos: value != null ? value.length : undefined,
+                        },
+                    };
+                }
             }
         }
     }

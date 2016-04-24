@@ -73,7 +73,7 @@ export default (state, action) => {
                     ...state,
                     selection: {
                         id,
-                        pos: value != null ? value.length : undefined,
+                        pos: value != null ? 0 : undefined,
                     }
                 };
             }
