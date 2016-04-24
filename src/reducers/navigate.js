@@ -1,10 +1,4 @@
-import { getValue, getNextNode } from './node_tools';
-
-const listLookup = {
-    'CallExpression': 'arguments',
-    'ArrayExpression': 'elements',
-    'FunctionExpression': 'params',
-};
+import { getValue, getNextNode, getPrevNode } from './node_tools';
 
 export default (state, action) => {
     const { selection, nodes } = state;
@@ -19,16 +13,10 @@ export default (state, action) => {
                 let pos = selection.pos;
 
                 if (pos === 0) {
-                    const parent = state.nodes.get(node.parent);
-                    if (Object.keys(listLookup).includes(parent.type)) {
-                        const list = parent[listLookup[parent.type]];
-                        let index = list.indexOf(id);
-                        if (index > 0) {
-                            index = Math.max(0, index - 1);
-                            id = list[index];
-                            pos = getValue(nodes.get(id)).length;
-                        }
-                    }
+                    id = getPrevNode(selection.id);
+                    if (id === -1) return state;
+                    const value = getValue(nodes.get(id));
+                    pos = value != null ? value.length : undefined;
                 } else {
                     pos = pos - 1;
                 }
@@ -37,32 +25,18 @@ export default (state, action) => {
                     ...state,
                     selection: {id, pos},
                 };
-            } else if (node.type === 'Placeholder') {
-                const parent = state.nodes.get(node.parent);
-                if (Object.keys(listLookup).includes(parent.type)) {
-                    const list = parent[listLookup[parent.type]];
-                    let index = list.indexOf(id);
-                    if (index > 0) {
-                        index = Math.max(0, index - 1);
-                        id = list[index];
-                        const prevNode = nodes.get(id);
+            } else if (['Placeholder', 'Keyword'].includes(node.type)) {
+                id = getPrevNode(selection.id);
+                if (id === -1) return state;
+                const value = getValue(nodes.get(id));
 
-                        if (prevNode.type === 'Placeholder') {
-                            return {
-                                ...state,
-                                selection: {id},
-                            };
-                        } else {
-                            return {
-                                ...state,
-                                selection: {
-                                    id,
-                                    pos: getValue(prevNode).length,
-                                },
-                            };
-                        }
+                return {
+                    ...state,
+                    selection: {
+                        id,
+                        pos: value != null ? value.length : undefined,
                     }
-                }
+                };
             }
 
             return state;
@@ -72,25 +46,13 @@ export default (state, action) => {
 
             if (selection && selection.pos != null) {
                 let pos = selection.pos;
-
                 const value = getValue(node);
 
                 if (pos === value.length) {
                     id = getNextNode(selection.id);
-                    console.log(state.nodes.get(id));
-                    pos = 0;
-
-                    // const parent = state.nodes.get(node.parent);
-                    // if (Object.keys(listLookup).includes(parent.type)) {
-                    //     const list = parent[listLookup[parent.type]];
-                    //     const count = list.length;
-                    //     let index = list.indexOf(id);
-                    //     if (index !== -1 && index + 1 < count) {
-                    //         index = index + 1;
-                    //         id = list[index];
-                    //         pos = 0;
-                    //     }
-                    // }
+                    if (id === -1) return state;
+                    const value = getValue(nodes.get(id));
+                    pos = value != null ? 0 : undefined;
                 } else {
                     pos = pos + 1;
                 }
@@ -102,33 +64,18 @@ export default (state, action) => {
                         pos,
                     },
                 };
-            } else if (node.type === 'Placeholder') {
-                const parent = state.nodes.get(node.parent);
-                if (Object.keys(listLookup).includes(parent.type)) {
-                    const list = parent[listLookup[parent.type]];
-                    const count = list.length;
-                    let index = list.indexOf(id);
-                    if (index !== -1 && index + 1 < count) {
-                        index = index + 1;
-                        id = list[index];
-                        const nextNode = nodes.get(id);
+            } else if (['Placeholder', 'Keyword'].includes(node.type)) {
+                id = getNextNode(selection.id);
+                if (id === -1) return state;
+                const value = getValue(nodes.get(id));
 
-                        if (nextNode.type === 'Placeholder') {
-                            return {
-                                ...state,
-                                selection: {id},
-                            };
-                        } else {
-                            return {
-                                ...state,
-                                selection: {
-                                    id,
-                                    pos: 0,
-                                },
-                            };
-                        }
+                return {
+                    ...state,
+                    selection: {
+                        id,
+                        pos: value != null ? value.length : undefined,
                     }
-                }
+                };
             }
             return state;
         default:

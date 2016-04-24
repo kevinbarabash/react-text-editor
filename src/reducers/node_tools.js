@@ -7,122 +7,150 @@ console.log(leaves);
 // TODO: cursorIsOnLeftEdge, cursorIsOnRightEdget
 // TODO: getPreviousNode, getNextNode
 
-export const getValue = function(node) {
+const getValue = function(node) {
     if (node.type === 'NumberLiteral') {
         return node.value;
     } else if (node.type === 'StringLiteral') {
         return `"${node.value}"`;
     } else if (node.type === 'Identifier') {
         return node.name;
+    } else if (node.type === 'Operator') {
+        return node.operator;
+    } else if (node.type === 'BlankStatement') {
+        return '';
     }
 };
 
 let id = 0;
 
-export const generateId = () => id++;
+const generateId = () => id++;
 
+const getLeftmostLeaf = (id) => {
+    const { nodes } = store.getState();
 
-function getProp(node, i) {
-    const state = store.getState();
-
-    let ordering = orderings[node.type];
-    if (i < 0) {
-        i = ordering.length - 1;
-    }
-    return state.nodes.get(node[ordering[i]]);
-}
-
-function getLeftmostLeaf(id) {
-    const state = store.getState();
-    const node = state.nodes.get(id);
+    const node = nodes.get(id);
 
     if (Array.isArray(node)) {
         return getLeftmostLeaf(node[0]);
     }
+
     if (leaves.includes(node.type)) {
         return id;
     }
+
     let ordering = orderings[node.type];
     let firstNodeId = -1;
+
     for (let i = 0; i < ordering.length; i++) {
         firstNodeId = node[ordering[i]];
-        if (state.nodes.get(firstNodeId)) {
-            break;
-        }
-    }
-
-    // TODO: handle case when firstNode is still -1
-    return getLeftmostLeaf(firstNodeId);
-}
-
-export const getNextNode = (id) => {
-    const state = store.getState();
-    const node = state.nodes.get(id);
-
-    let parent = state.nodes.get(node.parent);
-    if (!parent) {
-        throw "no next node";
-    }
-
-    const ordering = orderings[parent.type];
-
-    for (let i = 0; i < ordering.length - 1; i++) {
-        const current = parent[ordering[i]];
-        const next = parent[ordering[i+1]];
-
-        if (current === id) {
-            // skip items that are null
-            if (state.nodes.get(next) == null) continue;
-
-            return getLeftmostLeaf(next);
-        }
-
-        if (Array.isArray(current)) {
-            const index = current.findIndex(id => node === state.nodes.get(id));
-            if (index < current.length - 1) {
-                // get the next one
-                return getLeftmostLeaf(current[index + 1]);
+        const firstNode = nodes.get(firstNodeId);
+        if (firstNode != null) {
+            if (Array.isArray(firstNode)) {
+                if (firstNode.length > 0) {
+                    break;
+                }
+            } else {
+                break;
             }
         }
     }
 
-    // debugger;
+    return getLeftmostLeaf(firstNodeId);
+};
 
-    const last = parent[ordering[ordering.length - 1]];
-    if (Array.isArray(last)) {
-        let index = last.findIndex(child => child === id);
-        if (index < last.length - 1) {
-            return getLeftmostLeaf(last[index + 1]);
+const getRightmostLeaf = (id) => {
+    const { nodes } = store.getState();
+
+    const node = nodes.get(id);
+
+    if (Array.isArray(node)) {
+        return getRightmostLeaf(node[node.length - 1]);
+    }
+
+    if (leaves.includes(node.type)) {
+        return id;
+    }
+
+    let ordering = orderings[node.type];
+    let firstNodeId = -1;
+
+    for (let i = ordering.length - 1; i > -1; i--) {
+        firstNodeId = node[ordering[i]];
+        const firstNode = nodes.get(firstNodeId);
+        if (firstNode != null) {
+            if (Array.isArray(firstNode)) {
+                if (firstNode.length > 0) {
+                    break;
+                }
+            } else {
+                break;
+            }
         }
     }
 
-    //debugger;
+    return getRightmostLeaf(firstNodeId);
+};
 
-    // let ordering = orderings[parent.type];
-    // for (let i = 0; i < ordering.length - 1; i++) {
-    //     let currentProp = getProp(parent, i);
-    //     let nextProp = getProp(parent, i + 1);
-    //
-    //     if (currentProp === node) {
-    //         if (nextProp === null) continue;    // skip null props as these are optional
-    //         return getLeftmostLeaf(nextProp);
-    //     }
-    //     if (Array.isArray(currentProp)) {
-    //         let idx = currentProp.findIndex(child => child === node);
-    //         if (idx < currentProp.length - 1) {
-    //             return getLeftmostLeaf(currentProp[idx + 1]);
-    //         } else if (idx === 0) {
-    //             return getLeftmostLeaf(nextProp);
-    //         }
-    //     }
-    // }
-    // let lastProp = getProp(parent, -1);
-    // if (Array.isArray(lastProp)) {
-    //     let idx = lastProp.findIndex(child => child === node);
-    //     if (idx < lastProp.length - 1) {
-    //         return getLeftmostLeaf(lastProp[idx + 1]);
-    //     }
-    // }
-    // // fallback
-    // return getNextNode(parent);
+
+const getNextNode = function(id) {
+    const { nodes, parents } = store.getState();
+
+    const parent = nodes.get(parents.get(id));
+
+    if (Array.isArray(parent)) {
+        const index = parent.indexOf(id);
+        if (index < parent.length - 1) {
+            return getLeftmostLeaf(parent[index + 1]);
+        }
+    } else {
+        const ordering = orderings[parent.type];
+        let index = ordering.findIndex(prop => parent[prop] === id);
+        for ( ; index < ordering.length - 1; index += 1) {
+            const next = parent[ordering[index + 1]];
+            const nextNode = nodes.get(next);
+
+            if (next == null) continue;
+            if (Array.isArray(nextNode) && nextNode.length === 0) continue;
+
+            return getLeftmostLeaf(next);
+        }
+    }
+
+    const parentId = parents.get(id);
+    return parentId !== 0 ? getNextNode(parentId) : -1;
+};
+
+const getPrevNode = function(id) {
+    const { nodes, parents } = store.getState();
+
+    const parent = nodes.get(parents.get(id));
+
+    if (Array.isArray(parent)) {
+        const index = parent.indexOf(id);
+        if (index > 0) {
+            return getRightmostLeaf(parent[index - 1]);
+        }
+    } else {
+        const ordering = orderings[parent.type];
+        let index = ordering.findIndex(prop => parent[prop] === id);
+        for ( ; index > 0; index -= 1) {
+            const prev = parent[ordering[index - 1]];
+            const prevNode = nodes.get(prev);
+
+            if (prev == null) continue;
+            if (Array.isArray(prevNode) && prevNode.length === 0) continue;
+
+            return getRightmostLeaf(prev);
+        }
+    }
+
+    const parentId = parents.get(id);
+    return parentId !== 0 ? getPrevNode(parentId) : -1;
+};
+
+export {
+    getValue,
+    generateId,
+    getNextNode,
+    getPrevNode,
 };

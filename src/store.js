@@ -8,14 +8,19 @@ import navigateReducer from './reducers/navigate';
 import selectReducer from './reducers/select';
 import prog from './data/prog';
 
-export const deconstruct = (root) => {
+const deconstruct = (root) => {
     if (root === null || root === undefined) {
         return null;
     }
-    var nodes = Immutable.Map();
+
+    let nodes = Immutable.Map();
+    let parents = Immutable.Map();
+
     var traverse = function (obj, parent = -1) {
         const id = generateId();
-        const result = { parent };
+        parents = parents.set(id, parent);
+
+        const result = Array.isArray(obj) ? [] : {};
 
         Object.keys(obj).forEach(key => {
             const val = obj[key];
@@ -23,11 +28,7 @@ export const deconstruct = (root) => {
             if (val == null) {
                 result[key] = val;
             } else if (typeof val === "object") {
-                if (Array.isArray(val)) {
-                    result[key] = val.map(item => traverse(item, id));
-                } else {
-                    result[key] = traverse(val, id);
-                }
+                result[key] = traverse(val, id);
             } else if (typeof val === "function") {
                 result[key] = "[function]";
             } else {
@@ -40,11 +41,11 @@ export const deconstruct = (root) => {
     };
 
     traverse(root);
-    return nodes;
+    return { nodes, parents };
 };
 
 const defaultState = {
-    nodes: deconstruct(prog),
+    ...deconstruct(prog),
     selection: null,
 };
 

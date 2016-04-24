@@ -140,23 +140,42 @@ class StringLiteral extends Component {
 
 class Operator extends Component {
     handleClick = (e) => {
+        const span = this._span;
+        const bounds = span.getBoundingClientRect();
+        const width = bounds.right - bounds.left;
+
+        const charWidth = width / value.length;
+        const pos = Math.round((e.pageX - bounds.left) / charWidth);
+
         store.dispatch({
             type: 'SELECT',
             node: this.props.node,
             id: this.props.id,
+            pos: pos,
         });
     };
 
     render() {
+        let content = this.props.node.operator;
         const { selection } = this.props;
 
-        const style = {
-            color: "#000",
-            backgroundColor: selection ? "#9CF" : "",
-        };
+        if (selection) {
+            const selection = store.getState().selection;
+            const before = content.substring(0, selection.pos);
+            const after = content.substring(selection.pos);
+            content = [
+                <span key='before'>{before}</span>,
+                <Cursor key='cursor' pos={selection.pos}/>,
+                <span key='after'>{after}</span>
+            ];
+        }
 
-        return <span onClick={this.handleClick} style={style}>
-            {this.props.node.operator}
+        return <span
+            onClick={this.handleClick}
+            ref={node => this._span = node}
+            style={{color: "#000"}}
+        >
+            {content}
         </span>;
     }
 }
@@ -271,7 +290,9 @@ const ClassDeclaration = (props) =>{
 };
 
 const ClassBody = (props) => {
-    const defs = props.node.body.map((def, index) => {
+    const state = store.getState();
+    const body = state.nodes.get(props.node.body);
+    const defs = body.map((def, index) => {
         return <ConnectedNode node={def} key={`child-${index}`} />;
     });
 
@@ -296,8 +317,9 @@ const FunctionExpression = (props) => {
     const body = <ConnectedNode node={node.body} />;
 
     const params = [];
+    const state = store.getState();
 
-    node.params.forEach((param, index) => {
+    state.nodes.get(node.params).forEach((param, index) => {
         if (index > 0) {
             params.push(", ");
         }
@@ -318,7 +340,8 @@ const ReturnStatement = (props) => {
 };
 
 const VariableDeclaration = (props) => {
-    const decls = props.node.declarations;
+    const state = store.getState();
+    const decls = state.nodes.get(props.node.declarations);
 
     return <span>
         <ConnectedNode node={props.node.kind} />
@@ -332,7 +355,9 @@ const ExpressionStatement = (props) => {
 };
 
 const BlockStatement = (props) => {
-    const children = props.node.body.map((child, index) =>
+    const state = store.getState();
+    const body = state.nodes.get(props.node.body);
+    const children = body.map((child, index) =>
          <ConnectedNode node={child} key={`stmt-${index}`} />);
 
     const style = {
@@ -360,8 +385,9 @@ const AssignmentExpression = (props) => {
 
 const CallExpression = (props) => {
     const args = [];
+    const state = store.getState();
 
-    props.node.arguments.forEach((arg, index) => {
+    state.nodes.get(props.node.arguments).forEach((arg, index) => {
         if (index > 0) {
             args.push(", ");
         }
@@ -409,8 +435,9 @@ const BinaryExpression = (props) => {
 
 const ArrayExpression = (props) => {
     const elements = [];
+    const state = store.getState();
 
-    props.node.elements.forEach((element, index) => {
+    state.nodes.get(props.node.elements).forEach((element, index) => {
         if (index > 0) {
             elements.push(", ");
         }
@@ -431,8 +458,8 @@ const Program = (props) => {
         left: 45
     };
 
-    const { body } = props.node;
-
+    const state = store.getState();
+    const body = state.nodes.get(props.node.body);
     const children = body.map((child, index) =>
         <ConnectedNode node={child} key={`stmt-${index}`} />);
 
