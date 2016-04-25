@@ -358,8 +358,12 @@ const BlockStatement = (props) => {
     return <div style={style}>{children}</div>;
 };
 
-const BlankStatement = () => {
-    return <div>{"\u200b"}</div>;
+const BlankStatement = (props) => {
+    const contents = ["\u200b"];
+    if (props.selection) {
+        contents.push(<Cursor key='cursor' pos={0} />);
+    }
+    return <div>{contents}</div>;
 };
 
 const AssignmentExpression = (props) => {
