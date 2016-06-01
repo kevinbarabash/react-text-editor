@@ -43,10 +43,12 @@ var prog = {
                     { type: "NumberLiteral", value: "1.0" },
                     { type: "StringLiteral", value: "hello" },
                     {
-                        type: "BinaryExpression",
-                        left: { type: "NumberLiteral", value: "-5" },
-                        right: { type: "NumberLiteral", value: "-7" },
-                        operator: { type: "Operator", operator: "-" }
+                        type: "MathExpression",
+                        children: [
+                            { type: "NumberLiteral", value: "-5" },
+                            { type: "Operator", operator: "-" },
+                            { type: "NumberLiteral", value: "-7" }
+                        ]
                     }
                 ]
             },
@@ -63,15 +65,17 @@ var prog = {
                             },
                             operator: { type: "Operator", operator: "=" },
                             right: {
-                                type: "BinaryExpression",
-                                operator: { type: "Operator", operator: "+" },
-                                left: {
-                                    type: "Identifier",
-                                    name: "a"
-                                },
-                                right: {
-                                    type: "Placeholder"
-                                }
+                                type: "MathExpression",
+                                children: [
+                                    {
+                                        type: "Identifier",
+                                        name: "a"
+                                    },
+                                    { type: "Operator", operator: "+" },
+                                    { type: "Placeholder" },
+                                    { type: "Operator", operator: "*" },
+                                    { type: "Placeholder" }
+                                ]
                             }
                         }
                     },
@@ -86,16 +90,18 @@ var prog = {
                             },
                             arguments: [
                                 {
-                                    type: "BinaryExpression",
-                                    operator: { type: "Operator", operator: "*" },
-                                    left: {
-                                        type: "Identifier",
-                                        name: "a"
-                                    },
-                                    right: {
-                                        type: "NumberLiteral",
-                                        value: "50"
-                                    }
+                                    type: "MathExpression",
+                                    children: [
+                                        {
+                                            type: "Identifier",
+                                            name: "a"
+                                        },
+                                        { type: "Operator", operator: "*" },
+                                        {
+                                            type: "NumberLiteral",
+                                            value: "50"
+                                        }
+                                    ]
                                 },
                                 {
                                     type: "NumberLiteral",
@@ -129,33 +135,45 @@ var prog = {
                     operator: "="
                 },
                 right: {
-                    type: "BinaryExpression",
-                    left: {
-                        type: "Parentheses",
-                        expression: {
-                            type: "BinaryExpression",
-                            left: {
-                                type: "Identifier",
-                                name: "x"
-                            },
-                            operator: {
-                                type: "Operator",
-                                operator: "+"
-                            },
-                            right: {
-                                type: "NumberLiteral",
-                                value: "1"
+                    type: "MathExpression",
+                    children: [
+                        {
+                            type: "Parentheses",
+                            expression: {
+                                type: "MathExpression",
+                                children: [
+                                    {
+                                        type: "Identifier",
+                                        name: "x"
+                                    },
+                                    {
+                                        type: "Operator",
+                                        operator: "+"
+                                    },
+                                    {
+                                        type: "NumberLiteral",
+                                        value: "1"
+                                    },
+                                    {
+                                        type: "Operator",
+                                        operator: "-"
+                                    },
+                                    {
+                                        type: "Identifier",
+                                        name: "y"
+                                    }
+                                ]
                             }
+                        },
+                        {
+                            type: "Operator",
+                            operator: "/"
+                        },
+                        {
+                            type: "NumberLiteral",
+                            value: "2.0"
                         }
-                    },
-                    operator: {
-                        type: "Operator",
-                        operator: "/"
-                    },
-                    right: {
-                        type: "NumberLiteral",
-                        value: "2.0"
-                    }
+                    ]
                 }
             }
         },
@@ -223,16 +241,22 @@ var prog = {
                                             keyword: "return"
                                         },
                                         argument: {
-                                            type: "BinaryExpression",
-                                            operator: { type: "Operator", operator: "+" },
-                                            left: {
-                                                type: "Identifier",
-                                                name: "x"
-                                            },
-                                            right: {
-                                                type: "Identifier",
-                                                name: "y"
-                                            }
+                                            type: "MathExpression",
+                                            children: [
+                                                {
+                                                    type: "Identifier",
+                                                    name: "x"
+                                                },
+                                                {
+                                                    type: "Operator",
+                                                    operator: "+"
+                                                },
+                                                {
+                                                    type: "Identifier",
+                                                    name: "y"
+                                                }
+
+                                            ]
                                         }
                                     }
                                 ]

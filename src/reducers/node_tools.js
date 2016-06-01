@@ -1,9 +1,6 @@
 import { leaves, orderings } from '../data/ast_data';
 import store from '../store';
 
-console.log(orderings);
-console.log(leaves);
-
 // TODO: cursorIsOnLeftEdge, cursorIsOnRightEdget
 // TODO: getPreviousNode, getNextNode
 

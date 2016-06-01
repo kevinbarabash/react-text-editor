@@ -140,6 +140,8 @@ class StringLiteral extends Component {
 
 class Operator extends Component {
     handleClick = (e) => {
+        const value = this.props.node.operator;
+
         const span = this._span;
         const bounds = span.getBoundingClientRect();
         const width = bounds.right - bounds.left;
@@ -170,10 +172,16 @@ class Operator extends Component {
             ];
         }
 
+        const style = {
+            color: "#000",
+            marginLeft: '0.5em',
+            marginRight: '0.5em',
+        };
+
         return <span
             onClick={this.handleClick}
             ref={node => this._span = node}
-            style={{color: "#000"}}
+            style={style}
         >
             {content}
         </span>;
@@ -371,9 +379,7 @@ const AssignmentExpression = (props) => {
 
     return <span>
         <ConnectedNode node={left} />
-        {' '}
         <ConnectedNode node={operator} />
-        {' '}
         <ConnectedNode node={right} />
     </span>;
 };
@@ -411,9 +417,7 @@ const BinaryExpression = (props) => {
 
     return <span>
         <ConnectedNode node={left} />
-        {' '}
         <ConnectedNode node={operator} />
-        {' '}
         <ConnectedNode node={right} />
     </span>;
 };
@@ -424,6 +428,15 @@ const ArrayExpression = (props) => {
 
 const Parentheses = (props) => {
     return <span>(<ConnectedNode node={props.node.expression} />)</span>;
+};
+
+const MathExpression = (props) => {
+    const state = store.getState();
+    const children = state.nodes.get(props.node.children);
+
+    return <span>
+        {children.map((child, key) => <ConnectedNode key={key} node={child} />)}
+    </span>;
 };
 
 const Program = (props) => {
@@ -469,6 +482,7 @@ const components = {
     FunctionExpression,
     ReturnStatement,
     Parentheses,
+    MathExpression,
     Program,
 };
 

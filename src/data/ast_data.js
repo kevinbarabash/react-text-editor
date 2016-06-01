@@ -15,14 +15,15 @@ var orderings = {
     ForOfStatement: ["for", "left", "of", "right", "body"],
     ArrayExpression: ["elements"],
     Program: ["body"],
-    Parentheses: ["expression"]
+    Parentheses: ["expression"],
+    MathExpression: ["children"],
 };
 
 var leaves = [
-    "NumberLiteral", 
-    "StringLiteral", 
-    "Identifier", 
-    "Operator", 
+    "NumberLiteral",
+    "StringLiteral",
+    "Identifier",
+    "Operator",
     "Placeholder",
     "BlankStatement",   // blank line
     "Keyword"   // TODO replace plain old strings w/ Keyword nodes
