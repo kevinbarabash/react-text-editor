@@ -90,23 +90,54 @@ export default (state, action) => {
         } else if (node.type === 'Placeholder') {
             const parentNode = nodes.get(parent);
 
-            if (Array.isArray(parentNode)) {
-                const index = parentNode.indexOf(selection.id);
-                if (index > 0) {
-                    const prev = parentNode[index - 1];
-                    const value = getValue(nodes.get(prev));
 
-                    return {
-                        ...state,
-                        nodes: nodes.set(
-                            parent,
-                            parentNode.filter(id => id !== selection.id)
-                        ),
-                        selection: {
-                            id: prev,
-                            pos: value != null ? value.length : undefined,
-                        },
-                    };
+            if (Array.isArray(parentNode)) {
+                const grandparentNode = nodes.get(parents.get(parent));
+
+                if (grandparentNode.type === 'MathExpression') {
+                    const index = parentNode.indexOf(selection.id);
+                    if (index > 0) {
+                        // TODO: handle the case where there is no previous value
+                        const prev = parentNode[index - 1];
+                        const value = getValue(nodes.get(prev));
+
+                        console.log(`prev = ${prev}`);
+                        console.log(parentNode);
+                        const filteredNodes = parentNode.filter(id => {
+                            return id !== selection.id && id !== prev;
+                        });
+                        console.log(filteredNodes);
+
+                        return {
+                            ...state,
+                            nodes: nodes.set(
+                                parent,
+                                filteredNodes
+                            ),
+                            selection: {
+                                id: prev,
+                                pos: value != null ? value.length : undefined,
+                            },
+                        };
+                    }
+                } else {
+                    const index = parentNode.indexOf(selection.id);
+                    if (index > 0) {
+                        const prev = parentNode[index - 1];
+                        const value = getValue(nodes.get(prev));
+
+                        return {
+                            ...state,
+                            nodes: nodes.set(
+                                parent,
+                                parentNode.filter(id => id !== selection.id)
+                            ),
+                            selection: {
+                                id: prev,
+                                pos: value != null ? value.length : undefined,
+                            },
+                        };
+                    }
                 }
             }
         }

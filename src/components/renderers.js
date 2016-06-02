@@ -431,12 +431,7 @@ const Parentheses = (props) => {
 };
 
 const MathExpression = (props) => {
-    const state = store.getState();
-    const children = state.nodes.get(props.node.children);
-
-    return <span>
-        {children.map((child, key) => <ConnectedNode key={key} node={child} />)}
-    </span>;
+    return <ConnectedNode type='MathExpression' node={props.node.children} />;
 };
 
 const Program = (props) => {
@@ -503,13 +498,21 @@ function mapStateToProps(state, ownProps) {
 
 const Node = (props) => {
     const node = props.node;
+    const type = props.type;
 
     if (Array.isArray(node)) {
         const contents = [];
-        node.forEach((item, index) => {
-            if (index > 0) contents.push(", ");
-            contents.push(<ConnectedNode node={item} key={`item-${index}`}/>);
-        });
+
+        if (type === 'MathExpression') {
+            node.forEach((item, index) => {
+                contents.push(<ConnectedNode node={item} key={`item-${index}`}/>);
+            });
+        } else {
+            node.forEach((item, index) => {
+                if (index > 0) contents.push(", ");
+                contents.push(<ConnectedNode node={item} key={`item-${index}`}/>);
+            });
+        }
 
         return <span>{contents}</span>;
     } else {
